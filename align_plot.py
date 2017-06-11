@@ -14,7 +14,7 @@ import scipy
 import scipy.stats
 import pdb
 
-def getl_align(align_dir="./"):
+def get_align(align_dir="./"):
     s = starset.StarSet(align_dir + '/align/align')
 
     name = s.getArray('name')

@@ -41,7 +41,7 @@ def get_align(align_dir="./"):
             'N_epochs': N_epochs, 'N_stars': N_stars}
     return data
 
-def align_plot(targets, align_dir="./"):
+def align_plot(align_dir="./", targets):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]
 
     s = starset.StarSet(align_dir + '/align/align')

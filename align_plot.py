@@ -6,6 +6,7 @@ from jlu.microlens import align_compare
 from jlu.util import fileUtil
 from astropy.table import Table
 import numpy as np
+import os
 import shutil
 # from gcwork import starTables
 from gcwork import starset

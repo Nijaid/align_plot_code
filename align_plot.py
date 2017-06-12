@@ -76,7 +76,7 @@ def align_plot(targets, align_dir="./"):
         dx[ff, idx] = x[ff, idx]
         dy[ff, idx] = y[ff, idx]
         dxe[ff, idx] = xe_p[ff, idx]
-        dxy[ff, idx] = ye_p[ff, idx]
+        dye[ff, idx] = ye_p[ff, idx]
 
     tdx = [name.index(targets[0]), name.index(targets[1]), name.index(targets[2])]
 
@@ -98,11 +98,11 @@ def align_plot(targets, align_dir="./"):
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
-    out_ex = plot_dir + '/plots/plot_local_astrometry.png'
+    out_ex = plot_dir + '/plot_local_astrometry.png'
     plt.savefig(out_ex)
     plt.close()
 
-    print('Locate plot at' + out_ex)
+    print('Locate plot at ' + out_ex)
 
 
 def align_plot_fit(targets, align_dir="./"):

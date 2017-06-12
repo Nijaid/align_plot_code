@@ -175,7 +175,6 @@ def align_plot_fit(targets, align_dir="./"):
         dy_avg = dy12.mean(axis=0)
         dx_std = dx12.std(axis=0)
         dy_std = dy12.std(axis=0)
-        pdb.set_trace()
 
         # Print the deltas
         lens = np.where(np.array(name) == targets[0])[0][0]

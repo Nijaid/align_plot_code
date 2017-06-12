@@ -9,6 +9,7 @@ import numpy as np
 import os
 import shutil
 # from gcwork import starTables
+from time import strftime, localtime
 from gcwork import starset
 from scipy import spatial
 import scipy
@@ -117,7 +118,8 @@ def align_plot(targets, align_dir="./"):
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
-    out_ex = plot_dir + '/plot_astrometry.png'
+    t = strftime('%m-%d-%Y', localtime())
+    out_ex = plot_dir + '/' + targets[0] + '_' + t + '.png'
     plt.tight_layout()
     plt.savefig(out_ex)
     plt.close()

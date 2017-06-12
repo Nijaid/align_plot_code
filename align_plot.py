@@ -40,7 +40,7 @@ def get_align(align_dir="./"):
     data = {'x': x, 'y': y, 'xpixerr_p': xe_p, 'ypixerr_p': ye_p,
             'xpixerr_a': xe_a, 'ypixerr_a': ye_a,
             'N_epochs': N_epochs, 'N_stars': N_stars}
-    return data
+    return name
 
 def align_plot(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]
@@ -112,6 +112,7 @@ def align_plot(targets, align_dir="./"):
         dy_avg = dy12.mean(axis=0)
         dx_std = dx12.std(axis=0)
         dy_std = dy12.std(axis=0)
+        pdb.set_trace()
 
         # Print the deltas
         lens = np.where(np.array(name) == targets[0])[0][0]

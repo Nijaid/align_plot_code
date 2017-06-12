@@ -42,7 +42,7 @@ def get_align(align_dir="./"):
     data = {'x': x, 'y': y, 'xpixerr_p': xe_p, 'ypixerr_p': ye_p,
             'xpixerr_a': xe_a, 'ypixerr_a': ye_a,
             'N_epochs': N_epochs, 'N_stars': N_stars, 'time': time}
-    return name
+    return data
 
 def align_plot(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]

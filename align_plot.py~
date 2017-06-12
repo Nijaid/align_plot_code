@@ -27,6 +27,8 @@ def get_align(align_dir="./"):
     xe_a = s.getArrayFromAllEpochs('xpixerr_a')
     ye_a = s.getArrayFromAllEpochs('ypixerr_a')
 
+    time = s.years
+
     x0 = s.getArray('fitpXv.p')
     vx = s.getArray('fitpXv.v')
     t0x = s.getArray('fitpXv.t0')
@@ -39,7 +41,7 @@ def get_align(align_dir="./"):
 
     data = {'x': x, 'y': y, 'xpixerr_p': xe_p, 'ypixerr_p': ye_p,
             'xpixerr_a': xe_a, 'ypixerr_a': ye_a,
-            'N_epochs': N_epochs, 'N_stars': N_stars}
+            'N_epochs': N_epochs, 'N_stars': N_stars, 'time': time}
     return name
 
 def align_plot(targets, align_dir="./"):
@@ -58,12 +60,12 @@ def align_plot(targets, align_dir="./"):
     xe_a = s.getArrayFromAllEpochs('xpixerr_a')
     ye_a = s.getArrayFromAllEpochs('ypixerr_a')
 
-    x0 = s.getArray('fitpXv.p')
-    vx = s.getArray('fitpXv.v')
-    t0x = s.getArray('fitpXv.t0')
-    y0 = s.getArray('fitpYv.p')
-    vy = s.getArray('fitpYv.v')
-    t0y = s.getArray('fitpYv.t0')
+    # x0 = s.getArray('fitpXv.p')
+    # vx = s.getArray('fitpXv.v')
+    # t0x = s.getArray('fitpXv.t0')
+    # y0 = s.getArray('fitpYv.p')
+    # vy = s.getArray('fitpYv.v')
+    # t0y = s.getArray('fitpYv.t0')
 
     N_epochs = len(s.years)
     N_stars = len(s.stars)
@@ -112,7 +114,7 @@ def align_plot(targets, align_dir="./"):
         dy_avg = dy12.mean(axis=0)
         dx_std = dx12.std(axis=0)
         dy_std = dy12.std(axis=0)
-        psb.set_trace()
+        pdb.set_trace()
 
         # Print the deltas
         lens = np.where(np.array(name) == targets[0])[0][0]

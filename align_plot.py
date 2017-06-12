@@ -41,7 +41,7 @@ def get_align(align_dir="./"):
 
     data = {'x': x, 'y': y, 'xpixerr_p': xe_p, 'ypixerr_p': ye_p,
             'xpixerr_a': xe_a, 'ypixerr_a': ye_a,
-            'N_epochs': N_epochs, 'N_stars': N_stars, 'time': time}
+            'N_epochs': N_epochs, 'N_stars': N_stars, 'years': time}
     return data
 
 def align_plot(targets, align_dir="./"):
@@ -60,12 +60,73 @@ def align_plot(targets, align_dir="./"):
     xe_a = s.getArrayFromAllEpochs('xpixerr_a')
     ye_a = s.getArrayFromAllEpochs('ypixerr_a')
 
-    # x0 = s.getArray('fitpXv.p')
-    # vx = s.getArray('fitpXv.v')
-    # t0x = s.getArray('fitpXv.t0')
-    # y0 = s.getArray('fitpYv.p')
-    # vy = s.getArray('fitpYv.v')
-    # t0y = s.getArray('fitpYv.t0')
+    N_epochs = len(s.years)
+    N_stars = len(s.stars)
+
+    dx = np.zeros((N_epochs, N_stars), dtype=float)
+    dy = np.zeros((N_epochs, N_stars), dtype=float)
+    dxe = np.zeros((N_epochs, N_stars), dtype=float)
+    dye = np.zeros((N_epochs, N_stars), dtype=float)
+
+    for ff in range(N_epochs):
+        # Clean out undetected stars
+        idx = np.where((xe_p[ff, :] != 0) & (ye_p[ff, :] != 0))[0]
+
+        # Put together observed data
+        coords = np.empty((len(idx), 2))
+        coords[:, 0] = x[ff, idx]
+        coords[:, 1] = y[ff, idx]
+
+
+
+    plt.figure(1)
+    plt.clf()
+    plt.subplot(211)
+    plt.errorbar(s.years, dx[:, tdx[0]], yerr=dxe[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.errorbar(s.years, dx[:, tdx[1]], yerr=dxe[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.errorbar(s.years, dx[:, tdx[2]], yerr=dxe[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.legend(numpoints=1, fontsize=8)
+    plt.ylim(-0.22, 0.22)
+    plt.ylabel(r'$\Delta$x (pix)')
+    plt.axhline(0, color='k', linestyle='--')
+
+    plt.subplot(212)
+    plt.errorbar(s.years, dy[:, tdx[0]], yerr=dye[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.errorbar(s.years, dy[:, tdx[1]], yerr=dye[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.errorbar(s.years, dy[:, tdx[2]], yerr=dye[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.ylim(-0.22, 0.22)
+    plt.ylabel(r'$\Delta$y (pix)')
+    plt.xlabel('Year')
+    plt.axhline(0, color='k', linestyle='--')
+
+    plt.savefig(plot_dir + '/plots/plot_local_astrometry.png')
+    plt.close()
+
+    return(plot_dir + '/plots/plot_local_astrometry.png')
+
+
+def align_plot_fit(targets, align_dir="./"):
+    plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]
+    if os.path.exists(plot_dir) == False:
+        os.mkdir(plot_dir)
+
+    s = starset.StarSet(align_dir + '/align')
+
+    name = s.getArray('name')
+
+    x = s.getArrayFromAllEpochs('xpix')
+    y = s.getArrayFromAllEpochs('ypix')
+    xe_p = s.getArrayFromAllEpochs('xpixerr_p')
+    ye_p = s.getArrayFromAllEpochs('ypixerr_p')
+    xe_a = s.getArrayFromAllEpochs('xpixerr_a')
+    ye_a = s.getArrayFromAllEpochs('ypixerr_a')
+
+    x0 = s.getArray('fitpXv.p')
+    vx = s.getArray('fitpXv.v')
+    t0x = s.getArray('fitpXv.t0')
+    y0 = s.getArray('fitpYv.p')
+    vy = s.getArray('fitpYv.v')
+    t0y = s.getArray('fitpYv.t0')
 
     N_epochs = len(s.years)
     N_stars = len(s.stars)
@@ -131,7 +192,8 @@ def align_plot(targets, align_dir="./"):
 
     # Get the lens and two nearest sources
     tdx = [name.index(targets[0]), name.index(targets[1]), name.index(targets[2])]
-    return tdx
+    pdb.set_trace()
+
     # plt.figure(1)
     # plt.clf()
     # plt.subplot(211)

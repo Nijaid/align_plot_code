@@ -82,42 +82,43 @@ def align_plot(targets, align_dir="./"):
 
     plt.figure(1)
     plt.clf()
-    plt.subplot(411) # x plot
+    plt.subplot(221) # x plot
     plt.plot(s.years, dx[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dx[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dx[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.legend(numpoints=1, fontsize=8)
+    plt.tick_params(labelsize=8)
     plt.ylabel('x (pix)')
     plt.title('Position')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(412) # y plot
+    plt.subplot(223) # y plot
     plt.plot(s.years, dy[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dy[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dy[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.tick_params(labelsize=8)
     plt.ylabel('y (pix)')
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(421) # x error plot
+    plt.subplot(222) # x error plot
     plt.plot(s.years, dxe[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dxe[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dxe[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.legend(numpoints=1, fontsize=8)
-    plt.ylabel('x (pix)')
+    plt.tick_params(labelsize=8)
+    plt.legend(numpoints=2, fontsize=8)
     plt.title('Error in position')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(422) # y error plot
+    plt.subplot(224) # y error plot
     plt.plot(s.years, dye[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dye[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dye[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.legend(numpoints=1, fontsize=8)
-    plt.ylabel('y (pix)')
+    plt.tick_params(labelsize=8)
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
     out_ex = plot_dir + '/plot_astrometry.png'
+    plt.tight_layout()
     plt.savefig(out_ex)
     plt.close()
 

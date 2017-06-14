@@ -102,10 +102,10 @@ def align_plot(targets, align_dir="./"):
     plt.plot(s.years, dy[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.ylabel('y (pix)')
-    plt.xlabe('Year')
+    plt.xlabel('Year')
 
     plt.tight_layout()
-    plt.savefig(plot_dir + '_posplot.png')
+    plt.savefig(plot_dir + '/' + targets[0] + '_posplot.png')
 
     # Error plot
     plt.figure(2)
@@ -146,7 +146,7 @@ def align_plot(targets, align_dir="./"):
     plt.axhline(0, color='k', linestyle='--')
 
     plt.tight_layout()
-    plt.savefig(plot_dir + '_errplot.png')
+    plt.savefig(plot_dir + '/' + targets[0] + '_errplot.png')
 
     print('Locate plots at ' + plot_dir)
 

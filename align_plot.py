@@ -9,7 +9,6 @@ import numpy as np
 import os
 import shutil
 # from gcwork import starTables
-from time import strftime, localtime
 from gcwork import starset
 from scipy import spatial
 import scipy
@@ -66,8 +65,10 @@ def align_plot(targets, align_dir="./"):
 
     dx = np.zeros((N_epochs, N_stars), dtype=float)
     dy = np.zeros((N_epochs, N_stars), dtype=float)
-    dxe = np.zeros((N_epochs, N_stars), dtype=float)
-    dye = np.zeros((N_epochs, N_stars), dtype=float)
+    dxp = np.zeros((N_epochs, N_stars), dtype=float)
+    dyp = np.zeros((N_epochs, N_stars), dtype=float)
+    dxa = np.zeros((N_epochs, N_stars), dtype=float)
+    dya = np.zeros((N_epochs, N_stars), dtype=float)
 
     for ff in range(N_epochs):
         # Clean out undetected stars
@@ -76,55 +77,78 @@ def align_plot(targets, align_dir="./"):
         # Put together observed data
         dx[ff, idx] = x[ff, idx]
         dy[ff, idx] = y[ff, idx]
-        dxe[ff, idx] = xe_p[ff, idx]
-        dye[ff, idx] = ye_p[ff, idx]
+        dxp[ff, idx] = xe_p[ff, idx]
+        dyp[ff, idx] = ye_p[ff, idx]
+        dxa[ff, idx] = xe_a[ff, idx]
+        dya[ff, idx] = ye_a[ff, idx]
 
     tdx = [name.index(targets[0]), name.index(targets[1]), name.index(targets[2])]
 
+    # Position plot
     plt.figure(1)
     plt.clf()
-    plt.subplot(221) # x plot
+    plt.subplot(211)
     plt.plot(s.years, dx[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dx[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dx[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.ylabel('x (pix)')
-    plt.title('Position')
-    plt.axhline(0, color='k', linestyle='--')
+    plt.title('position')
+    plt.legend(numpoints=2, fontsize=8)
 
-    plt.subplot(223) # y plot
+    plt.subplot(212)
     plt.plot(s.years, dy[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dy[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dy[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.tick_params(labelsize=6)
+    plt.ylabel('y (pix)')
+    plt.xlabe('Year')
+
+    plt.tight_layout()
+    plt.savefig(plot_dir + '_posplot.png')
+
+    # Error plot
+    plt.figure(2)
+    plt.clf()
+    plt.subplot(221) # x position plot
+    plt.plot(s.years, dxp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.plot(s.years, dxp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.plot(s.years, dxp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.tick_params(labelsize=6)
+    plt.ylabel('x (pix)')
+    plt.title('error in position')
+    plt.axhline(0, color='k', linestyle='--')
+
+    plt.subplot(223) # y position plot
+    plt.plot(s.years, dyp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.plot(s.years, dyp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.plot(s.years, dyp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.ylabel('y (pix)')
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
     plt.subplot(222) # x error plot
-    plt.plot(s.years, dxe[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dxe[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dxe[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.plot(s.years, dxa[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.plot(s.years, dxa[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.plot(s.years, dxa[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.legend(numpoints=2, fontsize=8)
-    plt.title('Error in position')
+    plt.title('error in astrometry')
     plt.axhline(0, color='k', linestyle='--')
 
     plt.subplot(224) # y error plot
-    plt.plot(s.years, dye[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dye[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dye[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.plot(s.years, dya[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.plot(s.years, dya[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.plot(s.years, dya[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
-    t = strftime('%m-%d-%Y', localtime())
-    out_ex = plot_dir + '/' + targets[0] + '_' + t + '_a.png'
     plt.tight_layout()
-    plt.savefig(out_ex)
-    plt.close()
+    plt.savefig(plot_dir + '_errplot.png')
 
-    print('Locate plot at ' + out_ex)
+    print('Locate plots at ' + plot_dir)
 
 
 def align_plot_fit(targets, align_dir="./"):
@@ -215,27 +239,27 @@ def align_plot_fit(targets, align_dir="./"):
     tdx = [name.index(targets[0]), name.index(targets[1]), name.index(targets[2])]
     pdb.set_trace()
 
-    # plt.figure(1)
-    # plt.clf()
-    # plt.subplot(211)
-    # plt.errorbar(s.years, dx[:, tdx[0]], yerr=dxe[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    # plt.errorbar(s.years, dx[:, tdx[1]], yerr=dxe[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    # plt.errorbar(s.years, dx[:, tdx[2]], yerr=dxe[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    # plt.legend(numpoints=1, fontsize=8)
-    # plt.ylim(-0.22, 0.22)
-    # plt.ylabel(r'$\Delta$x (pix)')
-    # plt.axhline(0, color='k', linestyle='--')
-    #
-    # plt.subplot(212)
-    # plt.errorbar(s.years, dy[:, tdx[0]], yerr=dye[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    # plt.errorbar(s.years, dy[:, tdx[1]], yerr=dye[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    # plt.errorbar(s.years, dy[:, tdx[2]], yerr=dye[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    # plt.ylim(-0.22, 0.22)
-    # plt.ylabel(r'$\Delta$y (pix)')
-    # plt.xlabel('Year')
-    # plt.axhline(0, color='k', linestyle='--')
-    #
-    # plt.savefig(plot_dir + '/plots/plot_local_astrometry.png')
-    # plt.close()
-    #
-    # return(plot_dir + '/plots/plot_local_astrometry.png')
+    plt.figure(1)
+    plt.clf()
+    plt.subplot(211)
+    plt.errorbar(s.years, dx[:, tdx[0]], yerr=dxe[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.errorbar(s.years, dx[:, tdx[1]], yerr=dxe[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.errorbar(s.years, dx[:, tdx[2]], yerr=dxe[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.legend(numpoints=1, fontsize=8)
+    plt.ylim(-0.22, 0.22)
+    plt.ylabel(r'$\Delta$x (pix)')
+    plt.axhline(0, color='k', linestyle='--')
+
+    plt.subplot(212)
+    plt.errorbar(s.years, dy[:, tdx[0]], yerr=dye[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
+    plt.errorbar(s.years, dy[:, tdx[1]], yerr=dye[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
+    plt.errorbar(s.years, dy[:, tdx[2]], yerr=dye[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
+    plt.ylim(-0.22, 0.22)
+    plt.ylabel(r'$\Delta$y (pix)')
+    plt.xlabel('Year')
+    plt.axhline(0, color='k', linestyle='--')
+
+    plt.savefig(plot_dir + '/plots/plot_local_astrometry.png')
+    plt.close()
+
+    return(plot_dir + '/plots/plot_local_astrometry.png')

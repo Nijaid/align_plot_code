@@ -116,7 +116,7 @@ def align_plot(targets, align_dir="./"):
     plt.plot(s.years, dxp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.ylabel('x (pix)')
-    plt.title('error in position')
+    plt.title('error in photometry')
     plt.axhline(0, color='k', linestyle='--')
 
     plt.subplot(223) # y photo error plot

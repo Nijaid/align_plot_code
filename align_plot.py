@@ -110,7 +110,7 @@ def align_plot(targets, align_dir="./"):
     # Error plot
     plt.figure(2)
     plt.clf()
-    plt.subplot(221) # x position plot
+    plt.subplot(221) # x photo error plot
     plt.plot(s.years, dxp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dxp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dxp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
@@ -119,7 +119,7 @@ def align_plot(targets, align_dir="./"):
     plt.title('error in position')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(223) # y position plot
+    plt.subplot(223) # y photo error plot
     plt.plot(s.years, dyp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dyp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dyp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
@@ -128,7 +128,7 @@ def align_plot(targets, align_dir="./"):
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(222) # x error plot
+    plt.subplot(222) # x astrometric error plot
     plt.plot(s.years, dxa[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dxa[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dxa[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
@@ -137,7 +137,7 @@ def align_plot(targets, align_dir="./"):
     plt.title('error in astrometry')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(224) # y error plot
+    plt.subplot(224) # y astrometric error plot
     plt.plot(s.years, dya[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dya[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dya[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])

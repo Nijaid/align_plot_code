@@ -44,7 +44,7 @@ def get_align(align_dir="./"):
             'N_epochs': N_epochs, 'N_stars': N_stars, 'years': time}
     return data
 
-def align_plot(targets, align_dir="./"):
+def raw_align_plot(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]
     if os.path.exists(plot_dir) == False:
         os.mkdir(plot_dir)
@@ -116,7 +116,7 @@ def align_plot(targets, align_dir="./"):
     plt.plot(s.years, dxp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.ylabel('x (pix)')
-    plt.title('error in photometry')
+    plt.title('error in position')
     plt.axhline(0, color='k', linestyle='--')
 
     plt.subplot(223) # y photo error plot
@@ -134,7 +134,7 @@ def align_plot(targets, align_dir="./"):
     plt.plot(s.years, dxa[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.legend(numpoints=2, fontsize=8)
-    plt.title('error in astrometry')
+    plt.title('error in alignment')
     plt.axhline(0, color='k', linestyle='--')
 
     plt.subplot(224) # y astrometric error plot
@@ -150,6 +150,16 @@ def align_plot(targets, align_dir="./"):
 
     print('Locate plots at ' + plot_dir)
 
+
+def pos_align_plot(align_dir="./"):
+    os.chdir(align_dir)
+    plot_dir = '../plots/'
+    if os.path.exists(plot_dir) == False:
+        os.mkdir(plot_dir)
+
+    s = starset.StarSet('/align')
+
+    
 
 def align_plot_fit(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]

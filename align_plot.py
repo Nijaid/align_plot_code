@@ -157,27 +157,21 @@ def raw_align_plot(targets, align_dir="./"):
 
 date = strftime('%Y_%m_%d', localtime())
 
-def var_align(work_dir, target, epochs, refEpoch, date=date):
+def var_align(work_dir, target, epochs, refEpoch, date=date,
+            transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4]
+            trimStars=False):
     root_dir = '/u/nijaid/work/' + target.upper() + '/'
     template_dir = root_dir + work_dir
     if template_dir[len(template_dir)-1] != '/':
         template_dir = template_dir + '/'
 
-    # Trim starlists to a radius of 8"
-    trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
-                    TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
-
-    r = raw_input('Continue alignment?(y/n) ')
-    if r == 'n':
-        print('You have stopped the alignment.')
-        return
+    if trimStars==True: # Trim starlists to a radius of 8"
+        trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
+                        TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
 
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
                                  target=target, refEpoch=refEpoch)
-    transforms = raw_input('What transforms would you like? ')
-    magCuts = raw_input('At which magnitudes would you like to cut off? ')
-    weights = raw_input('What weighting schemes? ')
     align_epochs.align_loop(root=root_dir, prefix='a', date=date
             transforms=transforms, magCuts=magCuts, weightings=weights,
             Nepochs=len(epochs), overwrite=True, nMC=100,

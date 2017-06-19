@@ -172,6 +172,8 @@ def var_align(work_dir, target, epochs, refEpoch, date=date,
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
                                  target=target, refEpoch=refEpoch)
+
+    # run the alignment loop and plots
     align_epochs.align_loop(root=root_dir, prefix='a', date=date
             transforms=transforms, magCuts=magCuts, weightings=weights,
             Nepochs=len(epochs), overwrite=True, nMC=100,

@@ -2,6 +2,7 @@ import numpy as np
 import pylab as plt
 from jlu.microlens import residuals
 from jlu.microlens import align_compare
+from jlu.microlens import trim_starlists
 # from jlu.microlens import model
 from jlu.util import fileUtil
 from astropy.table import Table
@@ -10,10 +11,13 @@ import os
 import shutil
 # from gcwork import starTables
 from gcwork import starset
+from gcwork import objects
 from scipy import spatial
 import scipy
 import scipy.stats
+from time import strftime, localtime
 import pdb
+
 
 def get_align(align_dir="./"):
     s = starset.StarSet(align_dir + '/align')
@@ -150,6 +154,28 @@ def raw_align_plot(targets, align_dir="./"):
 
     print('Locate plots at ' + plot_dir)
 
+
+date = strftime('%Y_%m_%d', localtime())
+
+def var_align(work_dir, target, epochs, refEpoch, date=date):
+    root_dir = '/u/nijaid/work/' + target.upper() + '/'
+    template_dir = root_dir + work_dir
+    if template_dir[len(template_dir)-1] != '/':
+        template_dir = template_dir + '/'
+
+    # Trim starlists to a radius of 8"
+    trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
+                    TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
+
+    r = raw_input('Continue alignment?(y/n) ')
+    if r == 'n':
+        print('You have stopped the alignment.')
+        return
+
+    # make the align.lis
+    align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
+                                 target=target, refEpoch=refEpoch)
+    
 
 def pos_align_plot(align_dir="./"):
     os.chdir(align_dir)

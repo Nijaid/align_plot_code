@@ -2,6 +2,7 @@ import numpy as np
 import pylab as plt
 from jlu.microlens import residuals
 from jlu.microlens import align_compare
+from jlu.microlens import trim_starlists
 # from jlu.microlens import model
 from jlu.util import fileUtil
 from astropy.table import Table
@@ -10,6 +11,7 @@ import os
 import shutil
 # from gcwork import starTables
 from gcwork import starset
+from gcwork import objects
 from scipy import spatial
 import scipy
 import scipy.stats
@@ -44,7 +46,7 @@ def get_align(align_dir="./"):
             'N_epochs': N_epochs, 'N_stars': N_stars, 'years': time}
     return data
 
-def align_plot(targets, align_dir="./"):
+def raw_align_plot(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]
     if os.path.exists(plot_dir) == False:
         os.mkdir(plot_dir)
@@ -102,15 +104,15 @@ def align_plot(targets, align_dir="./"):
     plt.plot(s.years, dy[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.ylabel('y (pix)')
-    plt.xlabe('Year')
+    plt.xlabel('Year')
 
     plt.tight_layout()
-    plt.savefig(plot_dir + '_posplot.png')
+    plt.savefig(plot_dir + '/' + targets[0] + '_posplot.png')
 
     # Error plot
     plt.figure(2)
     plt.clf()
-    plt.subplot(221) # x position plot
+    plt.subplot(221) # x photo error plot
     plt.plot(s.years, dxp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dxp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dxp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
@@ -119,7 +121,7 @@ def align_plot(targets, align_dir="./"):
     plt.title('error in position')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(223) # y position plot
+    plt.subplot(223) # y photo error plot
     plt.plot(s.years, dyp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dyp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dyp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
@@ -128,16 +130,16 @@ def align_plot(targets, align_dir="./"):
     plt.xlabel('Year')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(222) # x error plot
+    plt.subplot(222) # x astrometric error plot
     plt.plot(s.years, dxa[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dxa[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dxa[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
     plt.tick_params(labelsize=6)
     plt.legend(numpoints=2, fontsize=8)
-    plt.title('error in astrometry')
+    plt.title('error in alignment')
     plt.axhline(0, color='k', linestyle='--')
 
-    plt.subplot(224) # y error plot
+    plt.subplot(224) # y astrometric error plot
     plt.plot(s.years, dya[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
     plt.plot(s.years, dya[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
     plt.plot(s.years, dya[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
@@ -146,10 +148,37 @@ def align_plot(targets, align_dir="./"):
     plt.axhline(0, color='k', linestyle='--')
 
     plt.tight_layout()
-    plt.savefig(plot_dir + '_errplot.png')
+    plt.savefig(plot_dir + '/' + targets[0] + '_errplot.png')
 
     print('Locate plots at ' + plot_dir)
 
+def var_align(work_dir, target, epochs):
+    root_dir = '/u/nijaid/work/' + target.upper() + '/'
+    template_dir = root_dir + work_dir
+    if template_dir[len(template_dir)-1] != '/':
+        template_dir = template_dir + '/'
+
+    # Trim starlists to a radius of 8"
+    trim_starlists.trim_in_radius(Readpath=template_dir+'lis/', TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
+
+    r = raw_input('Continue alignment?(y/n) ')
+    if r == 'n':
+        print('You have stopped the alignment.')
+        return
+
+    # make the align.lis
+    align_epochs.make_align_list(root=root_dir, prefix = 'a', 
+    
+
+def pos_align_plot(align_dir="./"):
+    os.chdir(align_dir)
+    plot_dir = '../plots/'
+    if os.path.exists(plot_dir) == False:
+        os.mkdir(plot_dir)
+
+    s = starset.StarSet('/align')
+
+    
 
 def align_plot_fit(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]

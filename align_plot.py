@@ -175,7 +175,14 @@ def var_align(work_dir, target, epochs, refEpoch, date=date):
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
                                  target=target, refEpoch=refEpoch)
-    
+    transforms = raw_input('What transforms would you like? ')
+    magCuts = raw_input('At which magnitudes would you like to cut off? ')
+    weights = raw_input('What weighting schemes? ')
+    align_epochs.align_loop(root=root_dir, prefix='a', date=date
+            transforms=transforms, magCuts=magCuts, weightings=weights,
+            Nepochs=len(epochs), overwrite=True, nMC=100,
+            makePlots=True, DoAlign=True, restrict=True)
+
 
 def pos_align_plot(align_dir="./"):
     os.chdir(align_dir)
@@ -185,7 +192,7 @@ def pos_align_plot(align_dir="./"):
 
     s = starset.StarSet('/align')
 
-    
+
 
 def align_plot_fit(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]

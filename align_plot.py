@@ -3,6 +3,7 @@ import pylab as plt
 from jlu.microlens import residuals
 from jlu.microlens import align_compare
 from jlu.microlens import trim_starlists
+from jlu.microlens import align_epochs
 # from jlu.microlens import model
 from jlu.util import fileUtil
 from astropy.table import Table
@@ -157,8 +158,8 @@ def raw_align_plot(targets, align_dir="./"):
 
 date = strftime('%Y_%m_%d', localtime())
 
-def var_align(work_dir, target, epochs, refEpoch, date=date,
-            transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4]
+def var_align(target, epochs, refEpoch, work_dir='a_'+date, date=date,
+            transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4],
             trimStars=False):
     root_dir = '/u/nijaid/work/' + target.upper() + '/'
     template_dir = root_dir + work_dir
@@ -174,9 +175,9 @@ def var_align(work_dir, target, epochs, refEpoch, date=date,
                                  target=target, refEpoch=refEpoch)
 
     # run the alignment loop and plots
-    align_epochs.align_loop(root=root_dir, prefix='a', date=date
+    align_epochs.align_loop(root=root_dir, prefix='a', date=date,
             transforms=transforms, magCuts=magCuts, weightings=weights,
-            Nepochs=len(epochs), overwrite=True, nMC=100,
+            Nepochs=str(len(epochs)), overwrite=True, nMC=100,
             makePlots=True, DoAlign=True, restrict=True)
 
 

@@ -172,8 +172,8 @@ def var_align(target, stars, epochs, refEpoch, work_dir='a_'+date, date=date,
                         TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
 
     # make the align.lis
-    #align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
-    #                             target=target, refEpoch=refEpoch)
+    align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
+                                 target=target, refEpoch=refEpoch)
     print(template_dir)
 
     # run the alignment loop and plot

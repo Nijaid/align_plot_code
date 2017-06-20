@@ -151,9 +151,10 @@ def raw_align_plot(targets, align_dir="./"):
     plt.axhline(0, color='k', linestyle='--')
 
     plt.tight_layout()
-    plt.savefig(plot_dir + '/' + targets[0] + '_errplot.png')
+    out_ex = plot_dir + '/' + targets[0] + '_errplot.png'
+    plt.savefig(out_ex)
 
-    print('Locate plots at ' + plot_dir)
+    print('Saved ' + out_ex)
 
 
 date = strftime('%Y_%m_%d', localtime())

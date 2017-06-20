@@ -163,13 +163,13 @@ def var_align(target, stars, epochs, refEpoch, work_dir='a_'+date, date=date,
             transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4],
             trimStars=False):
     root_dir = '/u/nijaid/work/' + target.upper() + '/'
-    template_dir = root_dir + work_dir
+    template_dir = root_dir + work_dir + '/a_' + target + '_' + date
     if template_dir[len(template_dir)-1] != '/':
         template_dir = template_dir + '/'
 
     if trimStars==True: # Trim starlists to a radius of 8"
         trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
-                        TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
+                        TargetName=target, epochs=epochs, radius_cut_in_mas=8000.0)
 
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,

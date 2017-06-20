@@ -159,7 +159,7 @@ def raw_align_plot(targets, align_dir="./"):
 
 date = strftime('%Y_%m_%d', localtime())
 
-def var_align(target, epochs, refEpoch, work_dir='a_'+date, date=date,
+def var_align(target, stars, epochs, refEpoch, work_dir='a_'+date, date=date,
             transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4],
             trimStars=False):
     root_dir = '/u/nijaid/work/' + target.upper() + '/'
@@ -172,12 +172,12 @@ def var_align(target, epochs, refEpoch, work_dir='a_'+date, date=date,
                         TargetName=target.upper(), epochs=epochs, radius_cut_in_mas=8000.0)
 
     # make the align.lis
-    align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
-                                 target=target, refEpoch=refEpoch)
+    #align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
+    #                             target=target, refEpoch=refEpoch)
     print(template_dir)
 
     # run the alignment loop and plot
-    align_epochs.align_loop(root=root_dir, prefix='a', target=target, date=date,
+    align_epochs.align_loop(root=root_dir, prefix='a', target=target, stars=stars, date=date,
             transforms=transforms, magCuts=magCuts, weightings=weights,
             Nepochs=str(len(epochs)), overwrite=True, nMC=100,
             makePlots=True, DoAlign=True, restrict=True)

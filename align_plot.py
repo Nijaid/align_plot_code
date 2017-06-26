@@ -204,6 +204,8 @@ def plot_20stars(work_dir="./"):
         for s in range(20):
             plotStar(starName=names[s], rootDir=_dir, align='align/align_t', poly='polyfit_d/fit', points='/points_d/')
 
+    plt.close('all')
+
 def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit', points='/points_d/'):
     print('Plotting residuals for ' + starName + ' in ' + rootDir)
 

@@ -5,7 +5,7 @@ from jlu.microlens import align_compare
 from jlu.microlens import trim_starlists
 from jlu.microlens import align_epochs
 # from jlu.microlens import model
-from jlu.util import fileUtil
+#from jlu.util import fileUtil
 from astropy.table import Table
 import numpy as np
 import os
@@ -20,8 +20,8 @@ from time import strftime, localtime
 import pdb
 
 
-def get_align(align_dir="./"):
-    s = starset.StarSet(align_dir + '/align')
+def get_align(align_dir="./", align_root='/align'):
+    s = starset.StarSet(align_dir + align_root)
 
     name = s.getArray('name')
 
@@ -159,17 +159,21 @@ def raw_align_plot(targets, align_dir="./"):
 
 date = strftime('%Y_%m_%d', localtime())
 
-def var_align(target, stars, epochs, refEpoch, work_dir='a_'+date, date=date,
+def var_align(target, stars, epochs, refEpoch, date=date,
             transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4],
-            trimStars=False):
+            trimStars=True, restrict=True):
+    """
+    Creates the lists necessary for the alignment loop, and runs the loop itself.
+    """
+    work_dir='a_'+date
     root_dir = '/u/nijaid/work/' + target.upper() + '/'
     template_dir = root_dir + work_dir + '/a_' + target + '_' + date
     if template_dir[len(template_dir)-1] != '/':
         template_dir = template_dir + '/'
-
+    
     if trimStars==True: # Trim starlists to a radius of 8"
         trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
-                        TargetName=target, epochs=epochs, radius_cut_in_mas=8000.0)
+                        TargetName=target, epochs=epochs, radius_cut_in_mas=4500.0)
 
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
@@ -180,17 +184,45 @@ def var_align(target, stars, epochs, refEpoch, work_dir='a_'+date, date=date,
     align_epochs.align_loop(root=root_dir, prefix='a', target=target, stars=stars, date=date,
             transforms=transforms, magCuts=magCuts, weightings=weights,
             Nepochs=str(len(epochs)), overwrite=True, nMC=100,
-            makePlots=True, DoAlign=True, restrict=True)
+            makePlots=True, DoAlign=True, restrict=restrict)
 
 
-def pos_align_plot(align_dir="./"):
-    os.chdir(align_dir)
-    plot_dir = '../plots/'
-    if os.path.exists(plot_dir) == False:
-        os.mkdir(plot_dir)
+def plot_20stars(work_dir="./"):
+    dirs = os.listdir(work_dir)
+    _dirs = []
+    for dd in dirs:
+        if len(dd) == 37:
+            _dirs.append(dd)
+            
+    for ii in range(len(_dirs)):
+        _dir = work_dir + '/' +  _dirs[ii] + '/'
+        align_dir = _dir + 'align/'
+        _f = Table.read(align_dir + 'align_t.name', format='ascii')
+        names = _f['col1']
+        names = np.array(names)
+        pdb.set_trace()
+        for s in range(20):
+            plotStar(starName=names[s], rootDir=_dir, align='align/align_t', poly='polyfit_d/fit', points='/points_d/')
+    
+def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
+                 points='/points_d/', radial=False, NcolMax=1, figsize=(15,10)):
+    print('Plotting residuals for ' + starName + 'in ' + rootDir)
+    Nrows = 3
 
-    s = starset.StarSet('/align')
+    s = starset.StarSet(rootDir + align)
+    s.loadPolyfit(rootDir + poly, accel=0, arcsec=0)
+    py.close('all')
+    py.figure(2, figsize=figsize)
+    names = s.getArray('name')
+    mag = s.getArray('mag')
+    x = s.getArray('x')
+    y = s.getArray('y')
+    r = np.hypot(x,y)
 
+    ind = names.index(starName)
+    star = s.stars[ind]
+
+    
 
 
 def align_plot_fit(targets, align_dir="./"):

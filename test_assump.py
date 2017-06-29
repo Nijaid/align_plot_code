@@ -102,14 +102,14 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
 
     pointsTab = table.Table.read(align_dir + 'points_d/' + target + '.points', format='ascii')
     at = pointsTab[pointsTab.colnames[0]]
-    ax = pointsTab[pointsTab.colnames[1]]
-    ay = pointsTab[pointsTab.colnames[2]]
-    axerr = pointsTab[pointsTab.colnames[3]]
-    ayerr = pointsTab[pointsTab.colnames[4]]
+    ax = pointsTab[pointsTab.colnames[1]] * 9.95
+    ay = pointsTab[pointsTab.colnames[2]] * 9.95
+    axerr = pointsTab[pointsTab.colnames[3]] * 9.95
+    ayerr = pointsTab[pointsTab.colnames[4]] * 9.95
     fitx = star.fitXv
     fity = star.fitYv
 
-    mt = np.arange(t0-3000, t0+3000, 1)
+    mt = np.arange(t0-1500, t0+1500, 1)
     mdt = mt - modeled.t0
     adt = at - fitx.t0
 
@@ -119,7 +119,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     fitSigX = np.sqrt( fitx.perr**2 + (adt * fitx.verr)**2 )
     fitLineY = fity.p + (fity.v * adt)
     fitSigY = np.sqrt( fity.perr**2 + (adt * fity.verr)**2 )
-    
+
     # plot everything scaled to Einstein units
     fig = py.figure(figsize=(20,10))
 

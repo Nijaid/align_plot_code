@@ -124,15 +124,15 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     fig = py.figure(figsize=(20,10))
 
     xpl = py.subplot(211)
-    py.plot(mdt / modeled.tE, shift[:,0] / thE, 'k-')
+    py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.plot(adt / modeled.tE, fitSigX  / thE, 'b--')
     py.errorbar(adt / modeled.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='r.')
     xpl.set_ylabel(r'dX / $\theta_E$')
 
     ypl = py.subplot(212, sharex=xpl)
     py.subplots_adjust(hspace=0)
-    py.plot(mdt / modeled.tE, shift[:,1] / thE, 'k-')
-    py.plot(adt / modeled.tE, fitsigY / thE, 'b--')
+    py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigY / thE, 'b--')
     py.errorbar(adt / modeled.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='r.')
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')

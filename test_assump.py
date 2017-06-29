@@ -2,7 +2,7 @@ import numpy as np
 from jlu.microlens import test_model, model
 from gcwork import starset
 from astropy import units, constants, table
-import pylab import py
+import pylab as py
 import os
 import pdb
 
@@ -45,7 +45,7 @@ def assume(t0, beta, tau, imag, outdir):
     test_model.test_PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, imag, outdir)
     py.close('all')
 
-def ModelAlign(t0, beta, tau, imag, target, align_dir, mL=1.0, dL=4000.0, dS=8000.0, root = '/u/nijaid/work/'):
+def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0, root = '/u/nijaid/work/'):
     '''
     Compare a model based on input assumptions against aligned data.
 
@@ -56,7 +56,10 @@ def ModelAlign(t0, beta, tau, imag, target, align_dir, mL=1.0, dL=4000.0, dS=800
         imag - float: Base photometric magnitude.
         target - str: Lowercase name of the target.
         align_dir - str: Path to the alignment directory.
-        mL - float:
+        mL - float: Mass of the lens in solar masses.
+        dL - float: Distance to the lens in parsecs.
+        dS - float: Distance to the source in parsecs.
+        root - string: Path to the work directory.
     '''
     mL = 1.0 # solar mass
     xS0 = np.array([0.0, 0.0])
@@ -79,17 +82,25 @@ def ModelAlign(t0, beta, tau, imag, target, align_dir, mL=1.0, dL=4000.0, dS=800
     print('Estimated Einstein radius: %f [mas]' %Er)
     print('Estimated source proper motion: %f [mas/yr]' %muS[0])
 
-    outdir = root + target.upper() + ('/mL_%.1f_dL_%.1f/' %(mL,dL))
+    os.chdir(root + target.upper() + '/' + align)
+    os.chdir('../tests/')
+    test = ('/mL_%.1f_dL_%.1f/' %(mL,dL))
+    outdir = os.getcwd() + test
     print outdir
     if os.path.exists(outdir) == False:
         os.mkdir(outdir)
 
     # get the model and the aligned data
     modeled = model.PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, imag)
-    s = starset.StarSet(align_dir + 'align_t')
+    align_dir = root + target.upper() + '/' + align
+    s = starset.StarSet(align_dir + 'align/align_t')
     s.loadPolyfit(align_dir + 'polyfit_d/fit', accel=0, arcsec=0)
 
-    pointsTab = table.Table.read(root + 'points_d/' + target + '.points', format='ascii')
+    names = s.getArray('name')
+    ss = names.index(target)
+    star = s.stars[ss]
+
+    pointsTab = table.Table.read(align_dir + 'points_d/' + target + '.points', format='ascii')
     at = pointsTab[pointsTab.colnames[0]]
     ax = pointsTab[pointsTab.colnames[1]]
     ay = pointsTab[pointsTab.colnames[2]]
@@ -99,30 +110,30 @@ def ModelAlign(t0, beta, tau, imag, target, align_dir, mL=1.0, dL=4000.0, dS=800
     fity = star.fitYv
 
     mt = np.arange(t0-3000, t0+3000, 1)
-    mdt = mt - fitx.t0
+    mdt = mt - modeled.t0
     adt = at - fitx.t0
 
-    thE = pspl.thetaE_amp
-    mshift = pspl.get_centroid_shift(mt)
+    thE = modeled.thetaE_amp
+    mshift = modeled.get_centroid_shift(mt)
     fitLineX = fitx.p + (fitx.v * adt)
-    fitSigX = np.sqrt( fitx.perr**2 + (dt * fitx.verr)**2 )
+    fitSigX = np.sqrt( fitx.perr**2 + (adt * fitx.verr)**2 )
     fitLineY = fity.p + (fity.v * adt)
-    fitSigY = np.sqrt( fity.perr**2 + (dt * fity.verr)**2 )
-
+    fitSigY = np.sqrt( fity.perr**2 + (adt * fity.verr)**2 )
+    
     # plot everything scaled to Einstein units
     fig = py.figure(figsize=(20,10))
 
     xpl = py.subplot(211)
-    py.plot(mdt / pspl.tE, shift[:,0] / thE, 'k-')
-    py.plot(adt / pspl.tE, fitSigX  / thE, 'b--')
-    py.errorbar(adt / pspl.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='r.')
+    py.plot(mdt / modeled.tE, shift[:,0] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigX  / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='r.')
     xpl.set_ylabel(r'dX / $\theta_E$')
 
     ypl = py.subplot(212, sharex=xpl)
     py.subplots_adjust(hspace=0)
-    py.plot(mdt / pspl.tE, shift[:,1] / thE, 'k-')
-    py.plot(adt / pspl.tE, fitsigY / thE, 'b--')
-    py.errorbar(adt / pspl.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='r.')
+    py.plot(mdt / modeled.tE, shift[:,1] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitsigY / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='r.')
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')
 

@@ -101,17 +101,17 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     star = s.stars[ss]
 
     pointsTab = table.Table.read(align_dir + 'points_d/' + target + '.points', format='ascii')
-    at = pointsTab[pointsTab.colnames[0]]
-    ax = pointsTab[pointsTab.colnames[1]] * 9.95
-    ay = pointsTab[pointsTab.colnames[2]] * 9.95
-    axerr = pointsTab[pointsTab.colnames[3]] * 9.95
-    ayerr = pointsTab[pointsTab.colnames[4]] * 9.95
+    at = pointsTab[pointsTab.colnames[0]] * 365.25
+    ax = pointsTab[pointsTab.colnames[1]]
+    ay = pointsTab[pointsTab.colnames[2]]
+    axerr = pointsTab[pointsTab.colnames[3]]
+    ayerr = pointsTab[pointsTab.colnames[4]]
     fitx = star.fitXv
     fity = star.fitYv
 
     mt = np.arange(t0-1500, t0+1500, 1)
     mdt = mt - modeled.t0
-    adt = at - fitx.t0
+    adt = at - (fitx.t0 * 365.25)
 
     thE = modeled.thetaE_amp
     mshift = modeled.get_centroid_shift(mt)
@@ -119,22 +119,46 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     fitSigX = np.sqrt( fitx.perr**2 + (adt * fitx.verr)**2 )
     fitLineY = fity.p + (fity.v * adt)
     fitSigY = np.sqrt( fity.perr**2 + (adt * fity.verr)**2 )
-
+    pdb.set_trace()
     # plot everything scaled to Einstein units
     fig = py.figure(figsize=(20,10))
 
     xpl = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.plot(adt / modeled.tE, fitSigX  / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='r.')
+     py.plot(adt / modeled.tE, -fitSigX  / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='ro')
     xpl.set_ylabel(r'dX / $\theta_E$')
 
     ypl = py.subplot(212, sharex=xpl)
     py.subplots_adjust(hspace=0)
     py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
     py.plot(adt / modeled.tE, fitSigY / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='r.')
+    py.plot(adt / modeled.tE, -fitSigY / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='ro')
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')
 
-    py.show()
+    py.savefig(outdir + 'shift_v_t.png')
+
+    #zoomed-in plot
+    fig2 = py.figure(figsize=(10,10))
+
+    xplz = py.subplot(211)
+    py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigX  / thE, 'b--')
+    py.plot(adt / modeled.tE, -fitSigX  / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='ro')
+    xplz.set_ylabel(r'dX / $\theta_E$')
+
+    yplz = py.subplot(212, sharex=xplz)
+    py.subplots_adjust(hspace=0)
+    py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigY / thE, 'b--')
+    py.plot(adt / modeled.tE, -fitSigY / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='ro')
+    yplz.set_xlim([adt[0] - 100, adt[len(at)-1] + 100])
+    yplz.set_ylabel(r'dY / $\theta_E$')
+    yplz.set_xlabel('(t - t0) / tE')
+
+    py.savefig(outdir + 'shift_v_t_zoom.png')

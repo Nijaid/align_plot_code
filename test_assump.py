@@ -50,7 +50,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     Compare a model based on input assumptions against aligned data.
 
     Args:
-        t0 - float: Time of peak photometric signal in MJD.
+        t0 - float: Time of peak photometric signal in days.
         beta - float: Minimum angular distance between source and lens in mas.
         tau - float: Einstein crossing time in days.
         imag - float: Base photometric magnitude.
@@ -61,9 +61,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
         dS - float: Distance to the source in parsecs.
         root - string: Path to the work directory.
     '''
-    mL = 1.0 # solar mass
     xS0 = np.array([0.0, 0.0])
-    dL = 4000.0 # pc
     muS = np.array([0.0, 0.0])
     muL = np.array([0.0, 0.0])
 
@@ -84,7 +82,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
 
     os.chdir(root + target.upper() + '/' + align)
     os.chdir('../tests/')
-    test = ('/mL_%.1f_dL_%.1f/' %(mL,dL))
+    test = ('/mL_%.1f_dL_%.1f_dS_%.1f/' %(mL,dL,dS))
     outdir = os.getcwd() + test
     print outdir
     if os.path.exists(outdir) == False:
@@ -101,7 +99,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     star = s.stars[ss]
 
     pointsTab = table.Table.read(align_dir + 'points_d/' + target + '.points', format='ascii')
-    at = pointsTab[pointsTab.colnames[0]] * 365.25
+    at = pointsTab[pointsTab.colnames[0]]
     ax = pointsTab[pointsTab.colnames[1]]
     ay = pointsTab[pointsTab.colnames[2]]
     axerr = pointsTab[pointsTab.colnames[3]]
@@ -111,7 +109,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
 
     mt = np.arange(t0-1500, t0+1500, 1)
     mdt = mt - modeled.t0
-    adt = at - (fitx.t0 * 365.25)
+    adt = at - (modeled.t0 / 365.25)
 
     thE = modeled.thetaE_amp
     mshift = modeled.get_centroid_shift(mt)
@@ -119,46 +117,48 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     fitSigX = np.sqrt( fitx.perr**2 + (adt * fitx.verr)**2 )
     fitLineY = fity.p + (fity.v * adt)
     fitSigY = np.sqrt( fity.perr**2 + (adt * fity.verr)**2 )
-    # pdb.set_trace()
+
+    adt *= 365.25
+    
     # plot everything scaled in Einstein units
     fig = py.figure(figsize=(20,10))
 
     xpl = py.subplot(211)
-    py.plot(mdt / modeled.tE, mshift[:,0], 'k-')
-    py.plot(adt / modeled.tE, fitSigX, 'b--')
-    py.plot(adt / modeled.tE, -fitSigX, 'b--')
-    py.errorbar(adt / modeled.tE, (ax - fitLineX), yerr=axerr, fmt='ro')
+    py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
+    py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr / thE, fmt='ro')
     xpl.set_ylabel(r'dX / $\theta_E$')
 
     ypl = py.subplot(212, sharex=xpl)
     py.subplots_adjust(hspace=0)
-    py.plot(mdt / modeled.tE, mshift[:,1], 'k-')
-    py.plot(adt / modeled.tE, fitSigY, 'b--')
-    py.plot(adt / modeled.tE, -fitSigY, 'b--')
-    py.errorbar(adt / modeled.tE, (ay - fitLineY), yerr=ayerr, fmt='ro')
+    py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
+    py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr / thE, fmt='ro')
     ypl.set_ylabel(r'dY / $\theta_E$')
-    ypl.set_xlabel('(t - t0)')
+    ypl.set_xlabel('(t - t0) / tE')
 
     py.savefig(outdir + 'shift_v_t.png')
 
     #zoomed-in plot
-    # fig2 = py.figure(figsize=(10,10))
-    #
-    # xplz = py.subplot(211)
-    # py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
-    # py.plot(adt / modeled.tE, fitSigX  / thE, 'b--')
-    # py.plot(adt / modeled.tE, -fitSigX  / thE, 'b--')
-    # py.errorbar(adt / modeled.tE, (ax - fitLineX) / thE, yerr=axerr/thE, fmt='ro')
-    # xplz.set_ylabel(r'dX / $\theta_E$')
-    #
-    # yplz = py.subplot(212, sharex=xplz)
-    # py.subplots_adjust(hspace=0)
-    # py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
-    # py.plot(adt / modeled.tE, fitSigY / thE, 'b--')
-    # py.plot(adt / modeled.tE, -fitSigY / thE, 'b--')
-    # py.errorbar(adt / modeled.tE, (ay - fitLineY) / thE, yerr=ayerr/thE, fmt='ro')
-    # yplz.set_xlim([adt[0] - 100, adt[len(at)-1] + 100])
-    # yplz.set_ylabel(r'dY / $\theta_E$')
-    # yplz.set_xlabel('(t - t0) / tE')
-    #
-    # py.savefig(outdir + 'shift_v_t_zoom.png')
+    fig2 = py.figure(figsize=(10,10))
+
+    xplz = py.subplot(211)
+    py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
+    py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr / thE, fmt='ro')    
+    xplz.set_ylabel(r'dX / $\theta_E$')
+    
+    yplz = py.subplot(212, sharex=xplz)
+    py.subplots_adjust(hspace=0)
+    py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
+    py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
+    py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr / thE, fmt='ro')
+    yplz.set_xlim([-5, 5])
+    yplz.set_ylabel(r'dY / $\theta_E$')
+    yplz.set_xlabel('(t - t0) / tE')
+    
+    py.savefig(outdir + 'shift_v_t_zoom.png')

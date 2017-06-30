@@ -50,7 +50,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     Compare a model based on input assumptions against aligned data.
 
     Args:
-        t0 - float: Time of peak photometric signal in days.
+        t0 - float: Time of peak photometric signal in days (t=0 on New Year's of year 0, UTC).
         beta - float: Minimum angular distance between source and lens in mas.
         tau - float: Einstein crossing time in days.
         imag - float: Base photometric magnitude.
@@ -121,15 +121,17 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     adt *= 365.25
 
     # plot everything scaled in Einstein units
+    alignment = align[35:-1]
     fig = py.figure(figsize=(20,10))
 
     xpl = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
-    py.legend()
+    py.legend(['model',alignment])
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
     xpl.set_ylabel(r'dX / $\theta_E$')
+    py.title(test[1:-1] + r' - $\theta_E =$ %.2f [mas]' %thE)
 
     ypl = py.subplot(212, sharex=xpl)
     py.subplots_adjust(hspace=0)
@@ -148,10 +150,11 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     xplz = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
-    py.legend()
+    py.legend(['model',alignment])
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
     xplz.set_ylabel(r'dX / $\theta_E$')
+    py.title(test[1:-1] + r' - $\theta_E =$ %.2f [mas]' %thE)
 
     yplz = py.subplot(212, sharex=xplz)
     py.subplots_adjust(hspace=0)

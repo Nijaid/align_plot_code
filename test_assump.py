@@ -119,15 +119,16 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     fitSigY = np.sqrt( fity.perr**2 + (adt * fity.verr)**2 )
 
     adt *= 365.25
-    
+
     # plot everything scaled in Einstein units
     fig = py.figure(figsize=(20,10))
 
     xpl = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
+    py.legend()
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr / thE, fmt='ro')
     xpl.set_ylabel(r'dX / $\theta_E$')
 
     ypl = py.subplot(212, sharex=xpl)
@@ -135,7 +136,7 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
     py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
     py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr / thE, fmt='ro')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')
 
@@ -146,19 +147,20 @@ def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0,
 
     xplz = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
+    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
+    py.legend()
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr / thE, fmt='ro')    
     xplz.set_ylabel(r'dX / $\theta_E$')
-    
+
     yplz = py.subplot(212, sharex=xplz)
     py.subplots_adjust(hspace=0)
     py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
     py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr / thE, fmt='ro')
+    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
     yplz.set_xlim([-5, 5])
     yplz.set_ylabel(r'dY / $\theta_E$')
     yplz.set_xlabel('(t - t0) / tE')
-    
+
     py.savefig(outdir + 'shift_v_t_zoom.png')

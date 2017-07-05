@@ -1,9 +1,11 @@
 import numpy as np
+from math import ceil
 import pylab as py
 from astropy.table import Table
 from astropy.io import fits
 from matplotlib.colors import LogNorm
 import os
+import pdb
 
 def starfield(): # plot the targets in their 15jun07 image
     root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
@@ -42,27 +44,30 @@ def mag_poserror(target):
 
     target - str: Lowercase name of the target.
     '''
-    root = '/u/jlu/microlens/data/'
+    root = '/u/jlu/data/microlens/'
     epochs = analyzed(target)
     magCutOff = 17.0
     radius = 4
     scale = 0.00995
 
+    py.figure(figsize=(15,5))
+    py.clf()
+        
     Nrows = ceil(float(len(epochs))/3)
-    n= = 1
+    n = 1
     for epoch in epochs:
-        starlist = root + '%s/combo/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
+        starlist = root + '%s/combo/starfinder/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
         print(starlist)
 
-        lis = asciidata.open(starlist)
-        name = lis[0]._data
-        mag = lis[1].tonumpy()
-        x = lis[3].tonumpy()
-        y = lis[4].tonumpy()
-        xerr = lis[5].tonumpy()
-        yerr = lis[6].tonumpy()
-        snr = lis[7].tonumpy()
-        corr = lis[8].tonumpy()
+        lis = Table.read(starlist, format='ascii')
+        name = lis[lis.colnames[0]]
+        mag = lis[lis.colnames[1]]
+        x = lis[lis.colnames[3]]
+        y = lis[lis.colnames[4]]
+        xerr = lis[lis.colnames[5]]
+        yerr = lis[lis.colnames[6]]
+        snr = lis[lis.colnames[7]]
+        corr = lis[lis.colnames[8]]
 
         merr = 1.086 / snr
 
@@ -113,15 +118,12 @@ def mag_poserror(target):
         errMedian = np.median(err[idx])
         numInMedian = len(idx)
 
-        py.figure(figsize=(15,5))
-        py.clf()
         py.subplot(Nrows, 3, n)
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
         py.axis([15, 23, 1e-2, 30.0])
         py.ylabel('Positional Uncertainty (mas)', fontsize=12)
-        date = '20' + epoch[0:2] + ' '
-                + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
+        date = '20' + epoch[0:2] + ' ' + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
         py.text(15, 10, date, fontsize=12)
         if ceil(float(n)/3) == Nrows:
             py.xlabel('K Magnitude', fontsize=12)

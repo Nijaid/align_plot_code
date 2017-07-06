@@ -38,7 +38,7 @@ def starfield(): # plot the targets in their 15jun07 image
     # py.show()
     py.savefig('/Users/nijaid/microlens/starfield.png', dpi=300)
 
-def mag_poserror(target):
+def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     '''
     Plot magnitude v position uncertainty in date tiles.
 
@@ -50,13 +50,11 @@ def mag_poserror(target):
     radius = 4
     scale = 0.00995
 
-    py.figure(figsize=(15,5))
-    py.clf()
-
-    Nrows = ceil(float(len(epochs))/3)
+    Nrows = int(ceil(float(len(epochs))/3))
     n = 1
 
-    fig, axes = py.subplots(Nrows, 3, sharex=True, sharey=True)
+    py.close('all')
+    fig, axes = py.subplots(Nrows, 3, figsize=(5*Nrows,5), sharex=True, sharey=True)
     for epoch in epochs:
         starlist = root + '%s/combo/starfinder/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
         print(starlist)
@@ -123,25 +121,35 @@ def mag_poserror(target):
         py.subplot(Nrows, 3, n)
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
-        py.axis([15, 23, 1e-2, 30.0])
+        py.axis([13.5, 22, 1e-2, 30.0])
         date = '20' + epoch[0:2] + ' ' + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
-        py.text(17, 10, date, fontsize=11)
+        py.text(14, 10, date, fontsize=11)
 
+        ax = py.gca().axes
+        ax.get_xaxis().set_tick_params(which='both', direction='in')
+        ax.get_yaxis().set_tick_params(which='both', direction='in')
         if int(n%3.0) != 1:
-            plt.gca().axes.yaxis.set_ticklabels([])
-        if (n+3) <= Nrows:
-            plt.gca().axes.xaxis.set_ticklabels([])
+            ax.yaxis.set_ticklabels([])
+        if (n+3) <= len(epochs):
+            ax.xaxis.set_ticklabels([])
         else:
             py.xlabel('K Magnitude', fontsize=12)
 
         n += 1
 
-    py.subplots_adjust(hspace=0.02, wspace=0.02)
+    for aa in range(3*Nrows):
+        if aa >= len(epochs):
+            fig.delaxes(axes.flatten()[aa])
+        
+    py.subplots_adjust(hspace=0.03, wspace=0.03)
 
     fig.add_subplot(111, frameon=False)
     py.tick_params(labelcolor='none', top='off', bottom='off', left='off', right='off')
     py.ylabel('Positional Uncertainty (mas)', fontsize=12)
-    py.show()
+
+    out = outdir + target + '_magPosEpochs'
+    py.savefig(out + '.png', dpi=300)
+    print('Figure saved in ' + outdir)
 
 def analyzed(target):
     if target == 'ob150211':
@@ -158,3 +166,5 @@ if __name__ == '__main__':
     if len(argv) > 1:
         if argv[1] == 'starfield':
             starfield()
+        if argv[1] == 'mag_poserror':
+            mag_poserror(argv[2])

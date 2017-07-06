@@ -127,6 +127,8 @@ def mag_poserror(target):
         date = '20' + epoch[0:2] + ' ' + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
         py.text(17, 10, date, fontsize=11)
 
+        if int(n%3.0) != 1:
+            plt.gca().axes.yaxis.set_ticklabels([])
         if (n+3) <= Nrows:
             plt.gca().axes.xaxis.set_ticklabels([])
         else:

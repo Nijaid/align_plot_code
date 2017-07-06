@@ -52,9 +52,11 @@ def mag_poserror(target):
 
     py.figure(figsize=(15,5))
     py.clf()
-        
+
     Nrows = ceil(float(len(epochs))/3)
     n = 1
+
+    fig, axes = py.subplots(Nrows, 3, sharex=True, sharey=True)
     for epoch in epochs:
         starlist = root + '%s/combo/starfinder/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
         print(starlist)
@@ -122,14 +124,21 @@ def mag_poserror(target):
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
         py.axis([15, 23, 1e-2, 30.0])
-        py.ylabel('Positional Uncertainty (mas)', fontsize=12)
         date = '20' + epoch[0:2] + ' ' + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
-        py.text(15, 10, date, fontsize=12)
-        if ceil(float(n)/3) == Nrows:
+        py.text(17, 10, date, fontsize=11)
+
+        if (n+3) <= Nrows:
+            plt.gca().axes.xaxis.set_ticklabels([])
+        else:
             py.xlabel('K Magnitude', fontsize=12)
 
         n += 1
 
+    py.subplots_adjust(hspace=0.02, wspace=0.02)
+
+    fig.add_subplot(111, frameon=False)
+    py.tick_params(labelcolor='none', top='off', bottom='off', left='off', right='off')
+    py.ylabel('Positional Uncertainty (mas)', fontsize=12)
     py.show()
 
 def analyzed(target):

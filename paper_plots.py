@@ -54,7 +54,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     n = 1
 
     py.close('all')
-    fig, axes = py.subplots(Nrows, 3, figsize=(5*Nrows,5), sharex=True, sharey=True)
+    fig, axes = py.subplots(Nrows, 3, figsize=(10,7.5), sharex=True, sharey=True)
     for epoch in epochs:
         starlist = root + '%s/combo/starfinder/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
         print(starlist)
@@ -68,7 +68,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         yerr = lis[lis.colnames[6]]
         snr = lis[lis.colnames[7]]
         corr = lis[lis.colnames[8]]
-
+        
         merr = 1.086 / snr
 
         # Convert into arsec offset from field center
@@ -114,6 +114,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
                 errRad[rr] = np.median(err[idx])
                 merrRad[rr] = np.median(err[idx])
 
+        tar = np.where(name == target)[0]
         idx = (np.where((mag < magCutOff) & (r < radius)))[0]
         errMedian = np.median(err[idx])
         numInMedian = len(idx)
@@ -121,9 +122,10 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         py.subplot(Nrows, 3, n)
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
-        py.axis([13.5, 22, 1e-2, 30.0])
+        py.semilogy(mag[tar], err[tar], 'r.') # plot the target in red
+        py.axis([8, 19, 1e-2, 30.0])
         date = '20' + epoch[0:2] + ' ' + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
-        py.text(14, 10, date, fontsize=11)
+        py.text(8.5, 10, date, fontsize=11)
 
         ax = py.gca().axes
         ax.get_xaxis().set_tick_params(which='both', direction='in')
@@ -149,7 +151,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
 
     out = outdir + target + '_magPosEpochs'
     py.savefig(out + '.png', dpi=300)
-    print('Figure saved in ' + outdir)
+    print('\nFigure saved in ' + outdir)
 
 def analyzed(target):
     if target == 'ob150211':
@@ -168,3 +170,5 @@ if __name__ == '__main__':
             starfield()
         if argv[1] == 'mag_poserror':
             mag_poserror(argv[2])
+        else:
+            print('This is not a valid command')

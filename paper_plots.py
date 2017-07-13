@@ -26,13 +26,15 @@ def starfield(): # plot the targets in their 15jun07 image
         py.plot([150,351.1], [100,100], color='magenta', linewidth=2) # plot a scale
         py.text(238.5, 125, '2"', color='magenta', fontsize=10)
 
-        # py.text(1010, 1010, 'N', color='green', fontsize=9)
-        # ax.arrow(1010,935, 0,75, head_width=0.05, head_length=0.05, fc='green')
-        # py.text(935, 935, 'E', color='green', fontsize=9)
+        ax = py.gca().axes
+        py.text(1006, 1010, 'N', color='green', fontsize=11)
+        ax.arrow(1022,917, 0,75, head_width=10, head_length=10, fc='green', ec='green')
+        py.text(900, 904, 'E', color='green', fontsize=11)
+        ax.arrow(1022,917, -75,0, head_width=10, head_length=10, fc='green', ec='green')
 
         py.xlim(30,1100)
         py.ylim(40,1060)
-        py.gca().axes.axis('off')
+        ax.axis('off')
         py.subplots_adjust(wspace=0.025)
 
     # py.show()
@@ -68,7 +70,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         yerr = lis[lis.colnames[6]]
         snr = lis[lis.colnames[7]]
         corr = lis[lis.colnames[8]]
-        
+
         merr = 1.086 / snr
 
         # Convert into arsec offset from field center
@@ -142,7 +144,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     for aa in range(3*Nrows):
         if aa >= len(epochs):
             fig.delaxes(axes.flatten()[aa])
-        
+
     py.subplots_adjust(hspace=0.03, wspace=0.03)
 
     fig.add_subplot(111, frameon=False)
@@ -168,7 +170,7 @@ if __name__ == '__main__':
     if len(argv) > 1:
         if argv[1] == 'starfield':
             starfield()
-        if argv[1] == 'mag_poserror':
+        elif argv[1] == 'mag_poserror':
             mag_poserror(argv[2])
         else:
             print('This is not a valid command')

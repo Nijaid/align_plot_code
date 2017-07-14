@@ -10,7 +10,7 @@ import pdb
 def starfield(): # plot the targets in their 15jun07 image
     root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
 
-    targets = ['OB150029','OB150211','OB140613']
+    targets = ['OB140613','OB150029','OB150211']
     fig = py.figure(figsize=(15,5))
     for i in range(len(targets)):
         img = fits.getdata(root + targets[i] + '_kp.fits')
@@ -19,9 +19,9 @@ def starfield(): # plot the targets in their 15jun07 image
         y = coords['col2']
 
         py.subplot(1,3,i+1)
-        py.imshow(img, cmap='Greys', norm=LogNorm(vmin=1.0,vmax=10000))
+        py.imshow(img, cmap='Greys', norm=LogNorm(vmin=10.0,vmax=10000))
         py.plot([x+100,x], [y-100,y], 'r-')
-        py.text(x+100, y-150, targets[i], fontsize=10, color='red')
+        py.text(x+100, y-150, targets[i], fontsize=12, color='red')
 
         py.plot([150,351.1], [100,100], color='magenta', linewidth=2) # plot a scale
         py.text(238.5, 125, '2"', color='magenta', fontsize=10)

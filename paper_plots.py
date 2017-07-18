@@ -42,7 +42,7 @@ def starfield(): # plot the targets in their 15jun07 image
 
 def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     '''
-    Plot magnitude v position uncertainty in date tiles.
+    Plot magnitude v position uncertainty in epoch subplots.
 
     target - str: Lowercase name of the target.
     '''
@@ -86,41 +86,9 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         r = np.hypot(x, y)
         err = (xerr + yerr) / 2.0
 
-        magStep = 1.0
-        radStep = 1.0
-        magBins = np.arange(10.0, 20.0, magStep)
-        radBins = np.arange(0.5, 9.5, radStep)
-
-        errMag = np.zeros(len(magBins), float)
-        errRad = np.zeros(len(radBins), float)
-        merrMag = np.zeros(len(magBins), float)
-        merrRad = np.zeros(len(radBins), float)
-
-        # Compute errors in magnitude bins
-        for mm in range(len(magBins)):
-            mMin = magBins[mm] - (magStep / 2.0)
-            mMax = magBins[mm] + (magStep / 2.0)
-            idx = (np.where((mag >= mMin) & (mag < mMax) & (r < radius)))[0]
-
-            if (len(idx) > 0):
-                errMag[mm] = np.median(err[idx])
-                merrMag[mm] = np.median(merr[idx])
-
-        # Compute errors in magnitude bins
-        for rr in range(len(radBins)):
-            rMin = radBins[rr] - (radStep / 2.0)
-            rMax = radBins[rr] + (radStep / 2.0)
-            idx = (np.where((r >= rMin) & (r < rMax) & (mag < magCutOff)))[0]
-
-            if (len(idx) > 0):
-                errRad[rr] = np.median(err[idx])
-                merrRad[rr] = np.median(err[idx])
-
         tar = np.where(name == target)[0]
         idx = (np.where((mag < magCutOff) & (r < radius)))[0]
-        errMedian = np.median(err[idx])
-        numInMedian = len(idx)
-
+        
         py.subplot(Nrows, 3, n)
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
@@ -141,7 +109,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
 
         n += 1
 
-    for aa in range(3*Nrows):
+    for aa in range(3*Nrows): # delete empty subplots
         if aa >= len(epochs):
             fig.delaxes(axes.flatten()[aa])
 

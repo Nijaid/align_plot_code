@@ -47,7 +47,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     target - str: Lowercase name of the target.
     '''
     root = '/u/jlu/data/microlens/'
-    epochs = analyzed(target)
+    epochs, xlim = analyzed(target)
     magCutOff = 17.0
     radius = 4
     scale = 0.00995
@@ -93,9 +93,9 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
         py.semilogy(mag[tar], err[tar], 'r.') # plot the target in red
-        py.axis([8, 19, 1e-2, 30.0])
+        py.axis(xlim)
         date = '20' + epoch[0:2] + ' ' + epoch[2].upper() + epoch[3:5] + ' ' + epoch[5:]
-        py.text(8.5, 10, date, fontsize=11)
+        py.text(xlim[0]+0.5, 10, date, fontsize=11)
 
         ax = py.gca().axes
         ax.get_xaxis().set_tick_params(which='both', direction='in')
@@ -121,16 +121,19 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
 
     out = outdir + target + '_magPosEpochs'
     py.savefig(out + '.png', dpi=300)
-    print('\nFigure saved in ' + outdir)
+    print('\nFigure saved in ' + outdir + '\n')
 
 def analyzed(target):
     if target == 'ob150211':
-        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02']
+        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08']
+        xlim = [8, 19, 1e-2, 30.0]
     if target == 'ob150029':
-        epochs = ['15jun07', '15jul23', '16may24', '16jul14']
+        epochs = ['15jun07', '15jul23', '16may24', '16jul14', '17may21']
+        xlim = [11.5, 22, 1e-2, 30.0]
     if target == 'ob140613':
-        epochs = ['15jun07', '15jun28', '16apr17', '16may24', '16aug02']
-    return epochs
+        epochs = ['15jun07', '15jun28', '16apr17', '16may24', '16aug02', '17jun05']
+        xlim = [11.75, 22.5, 1e-2, 30.0]
+    return epochs, xlim
 
 
 if __name__ == '__main__':

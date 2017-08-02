@@ -10,12 +10,10 @@ from astropy.table import Table
 import numpy as np
 import os
 import shutil
-# from gcwork import starTables
 from gcwork import starset
 from gcwork import objects
 from scipy import spatial
-import scipy
-import scipy.stats
+from scipy import stats
 from time import strftime, localtime
 import pdb
 
@@ -49,113 +47,6 @@ def get_align(align_dir="./", align_root='/align'):
             'N_epochs': N_epochs, 'N_stars': N_stars, 'years': time}
     return data
 
-def raw_align_plot(targets, align_dir="./"):
-    plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]
-    if os.path.exists(plot_dir) == False:
-        os.mkdir(plot_dir)
-
-    s = starset.StarSet(align_dir + '/align')
-
-    name = s.getArray('name')
-
-    x = s.getArrayFromAllEpochs('xpix')
-    y = s.getArrayFromAllEpochs('ypix')
-    xe_p = s.getArrayFromAllEpochs('xpixerr_p')
-    ye_p = s.getArrayFromAllEpochs('ypixerr_p')
-    xe_a = s.getArrayFromAllEpochs('xpixerr_a')
-    ye_a = s.getArrayFromAllEpochs('ypixerr_a')
-
-    N_epochs = len(s.years)
-    N_stars = len(s.stars)
-
-    dx = np.zeros((N_epochs, N_stars), dtype=float)
-    dy = np.zeros((N_epochs, N_stars), dtype=float)
-    dxp = np.zeros((N_epochs, N_stars), dtype=float)
-    dyp = np.zeros((N_epochs, N_stars), dtype=float)
-    dxa = np.zeros((N_epochs, N_stars), dtype=float)
-    dya = np.zeros((N_epochs, N_stars), dtype=float)
-
-    for ff in range(N_epochs):
-        # Clean out undetected stars
-        idx = np.where((xe_p[ff, :] != 0) & (ye_p[ff, :] != 0))[0]
-
-        # Put together observed data
-        dx[ff, idx] = x[ff, idx]
-        dy[ff, idx] = y[ff, idx]
-        dxp[ff, idx] = xe_p[ff, idx]
-        dyp[ff, idx] = ye_p[ff, idx]
-        dxa[ff, idx] = xe_a[ff, idx]
-        dya[ff, idx] = ye_a[ff, idx]
-
-    tdx = [name.index(targets[0]), name.index(targets[1]), name.index(targets[2])]
-
-    # Position plot
-    plt.figure(1)
-    plt.clf()
-    plt.subplot(211)
-    plt.plot(s.years, dx[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dx[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dx[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.tick_params(labelsize=6)
-    plt.ylabel('x (pix)')
-    plt.title('position')
-    plt.legend(numpoints=2, fontsize=8)
-
-    plt.subplot(212)
-    plt.plot(s.years, dy[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dy[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dy[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.tick_params(labelsize=6)
-    plt.ylabel('y (pix)')
-    plt.xlabel('Year')
-
-    plt.tight_layout()
-    plt.savefig(plot_dir + '/' + targets[0] + '_posplot.png')
-
-    # Error plot
-    plt.figure(2)
-    plt.clf()
-    plt.subplot(221) # x photo error plot
-    plt.plot(s.years, dxp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dxp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dxp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.tick_params(labelsize=6)
-    plt.ylabel('x (pix)')
-    plt.title('error in position')
-    plt.axhline(0, color='k', linestyle='--')
-
-    plt.subplot(223) # y photo error plot
-    plt.plot(s.years, dyp[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dyp[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dyp[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.tick_params(labelsize=6)
-    plt.ylabel('y (pix)')
-    plt.xlabel('Year')
-    plt.axhline(0, color='k', linestyle='--')
-
-    plt.subplot(222) # x astrometric error plot
-    plt.plot(s.years, dxa[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dxa[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dxa[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.tick_params(labelsize=6)
-    plt.legend(numpoints=2, fontsize=8)
-    plt.title('error in alignment')
-    plt.axhline(0, color='k', linestyle='--')
-
-    plt.subplot(224) # y astrometric error plot
-    plt.plot(s.years, dya[:, tdx[0]], color='red', linestyle='none', marker='.', label=targets[0])
-    plt.plot(s.years, dya[:, tdx[1]], color='blue', linestyle='none', marker='.', label=targets[1])
-    plt.plot(s.years, dya[:, tdx[2]], color='green', linestyle='none', marker='.', label=targets[2])
-    plt.tick_params(labelsize=6)
-    plt.xlabel('Year')
-    plt.axhline(0, color='k', linestyle='--')
-
-    plt.tight_layout()
-    out_ex = plot_dir + '/' + targets[0] + '_errplot.png'
-    plt.savefig(out_ex)
-
-    print('Saved ' + out_ex)
-
 
 date = strftime('%Y_%m_%d', localtime())
 
@@ -171,9 +62,9 @@ def var_align(target, stars, epochs, refEpoch, date=date,
     if template_dir[len(template_dir)-1] != '/':
         template_dir = template_dir + '/'
 
-    if trimStars==True: # Trim starlists to a radius of 8"
+    if trimStars==True: # Trim starlists to a radius of 4"
         trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
-                        TargetName=target, epochs=epochs, radius_cut_in_mas=4500.0)
+                        TargetName=target, epochs=epochs, radius_cut_in_mas=4000.0)
 
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
@@ -262,9 +153,9 @@ def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
           (fity.chi2red, fity.chi2, fity.dof))
 
     dateTicLoc = plt.MultipleLocator(3)
-    dateTicRng = [2006, 2017]
+    dateTicRng = [2012, 2019]
     # dateTics = np.array([2011, 2012, 2013, 2014, 2015, 2016, 2017])
-    dateTics = np.array([2015, 2016, 2017])
+    dateTics = np.array([2015, 2016, 2017, 2018])
     DateTicsLabel = dateTics-2000
 
     # See if we are using MJD instead.
@@ -384,6 +275,103 @@ def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
     plt.subplots_adjust(wspace=0.4, hspace=0.4, left = 0.15, bottom = 0.1, right=0.9, top=0.9) 
     plt.savefig(rootDir+'plots/plotStar_' + starName + '.png')
 
+
+def ftest_summary(target, date,root='/u/nijaid/work/', prefix='a',
+                orders=[3,4,5], weights=[1,2,3,4], Kcut=18, only_stars_in_fit=True,
+                export=False):
+    # Make 2D arrays for each alignment parameter
+    orders = np.array(orders)
+    weights = np.array(weights)
+
+    end = 'all'
+    if only_stars_in_fit:
+        end = 'used'
+        
+    work_dir = root + target.upper() + '/' + prefix + '_' + date + '/'
+
+    # Dictionary of free parameters for each order
+    N_par_aln_dict = {3: 3, 4: 6, 5: 10}
+    N_par_aln = [N_par_aln_dict[order] for order in orders]
+
+    print('********* ' + target.upper() + ' F TEST *********')
+    print( '* Results for Kcut={0:d} and in fit={1}'.format(Kcut, only_stars_in_fit) )
+    print( '*********' )
+    N_free_all = np.zeros((len(weights), len(orders)), dtype=int)
+    N_data_all = np.zeros((len(weights), len(orders)), dtype=int)
+    ftest = np.zeros((len(weights), len(orders)-1), dtype=float)
+    p_value = np.zeros((len(weights), len(orders)-1), dtype=float)
+    chi2_all = np.zeros((len(weights), len(orders)), dtype=float)
+
+    for ww in range(len(weights)):
+        for oo in range(len(orders)):
+            analysis_root_fmt = '{0:s}_{1:s}_{2:s}_a{3:d}_m{4:d}_w{5:d}_MC100/'
+            analysis_dir = work_dir + analysis_root_fmt.format(prefix, target, date, orders[oo], Kcut, weights[ww])
+
+            data = residuals.check_alignment_fit(root_dir=analysis_dir)
+
+            year = data['year']
+            scale = 9.952 # mas/pixel
+
+            chi2x = data['chi2x_' + end].sum()
+            chi2y = data['chi2y_' + end].sum()
+            chi2 = chi2x + chi2y
+
+            N_data = 2 * data['N_stars_' + end].sum()
+            N_stars_max = data['N_stars_' + end].max()
+            N_vfit = 4 * N_stars_max
+            N_afit = (len(year) - 1) * N_par_aln[oo] * 2
+
+            N_free_param = N_vfit + N_afit
+            N_dof = N_data - N_free_param
+
+            fmt = 'Order={0:d}  Weight={1:d} N_stars = {2:3d}  N_par = {3:3d}  N_dof = {4:3d}  Chi^2 = {5:5.1f}'
+            print(fmt.format(orders[oo], weights[ww], int(N_data), int(N_free_param), int(N_dof), chi2))
+
+            N_free_all[ww, oo] = int(N_free_param)
+            N_data_all[ww, oo] = int(N_data)
+            chi2_all[ww, oo] = chi2
+
+        # F-test
+        N_free = N_free_all[ww]
+        N_data = N_data_all[ww]
+        chi2 = chi2_all[ww]
+        f1 = N_data[1:] - N_free[1:]
+        f2 = np.diff(N_free)
+        ft = (-1 * np.diff(chi2)) / chi2[1:] * f1 / f2
+
+        p = p_value[ww]
+        for mm in range(len(ft)):
+            p[mm] = stats.f.sf(ft[mm], f2[mm], f1[mm])
+            fmt = 'Weight = {0}  O-1 = {1} --> O = {2}   F = {3:5.2f}  p = {4:7.5f}'
+            print(fmt.format(weights[ww], orders[mm], orders[mm+1], ft[mm], p[mm]))
+        p_value[ww] = p
+        ftest[ww] = ft
+        print('\n')
+
+def compare_orders(target, date, prefix='a', orders=[3,4,5], weights=[1,2,3,4],
+                    Kcut=18, only_stars_in_fit=True, plot_dir='compare_epochs/', root='/u/nijaid/work/'):
+    from jlu.microlens import align_compare
+    from nirc2.reduce import util
+
+    work_dir = root + target.upper() + '/' + prefix + '_' + date + '/'
+    plot_d = work_dir + plot_dir
+    util.mkdir(plot_d)
+    
+    ana_fmt = work_dir + prefix + '_' + target + '_' + date + '_a{0}_m{1}_w{2}_MC100/'
+    for ww in weights:
+        ana_dirs = []
+        for oo in orders:
+            ana_dir = ana_fmt.format(int(oo), int(Kcut), int(ww))
+            ana_dirs.append(ana_dir)
+            
+        cut_dir = 'm' + str(Kcut) + '_w' + str(ww) + '/'
+        print('** Weight = ' + str(ww) + ' **') 
+        util.mkdir(plot_d+cut_dir)
+        align_compare.align_residuals_vs_order(ana_dirs, firstorder=orders[0], only_stars_in_fit=only_stars_in_fit, plot_dir=plot_d+cut_dir)
+        print('\n')
+
+    plt.close('all')
+    
 
 def align_plot_fit(targets, align_dir="./"):
     plot_dir = '/u/nijaid/microlens/align_plots/' + targets[0]

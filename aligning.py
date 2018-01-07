@@ -1,9 +1,9 @@
 import numpy as np
 import pylab as plt
-from jlu.microlens import residuals
-from jlu.microlens import align_compare
-from jlu.microlens import trim_starlists
-from jlu.microlens import align_epochs
+from microlens.jlu import residuals
+from microlens.jlu import align_compare
+from microlens.jlu import trim_starlists
+from microlens.jlu import align_epochs
 # from jlu.microlens import model
 #from jlu.util import fileUtil
 from astropy.table import Table
@@ -50,21 +50,21 @@ def get_align(align_dir="./", align_root='/align'):
 
 date = strftime('%Y_%m_%d', localtime())
 
-def var_align(target, stars, epochs, refEpoch, date=date,
-            transforms=[3,4,5], magCuts=[22], weights=[1,2,3,4],
-            trimStars=True, restrict=True):
+def var_align(target, stars, epochs, refEpoch, date=date, radius_cut=4000.0,
+            transforms=[3,4,5], magCuts=[18], weights=[1,2,3,4],
+            trimStars=True, restrict=False):
     """
     Creates the lists necessary for the alignment loop, and runs the loop itself.
     """
     work_dir='a_'+date
-    root_dir = '/u/nijaid/work/' + target.upper() + '/'
+    root_dir = '/g/lu/microlens/cross_epoch/' + target.upper() + '/'
     template_dir = root_dir + work_dir + '/a_' + target + '_' + date
     if template_dir[len(template_dir)-1] != '/':
         template_dir = template_dir + '/'
 
     if trimStars==True: # Trim starlists to a radius of 4"
         trim_starlists.trim_in_radius(Readpath=template_dir+'lis/',
-                        TargetName=target, epochs=epochs, radius_cut_in_mas=4000.0)
+                        TargetName=target, epochs=epochs, radius_cut_in_mas=radius_cut)
 
     # make the align.lis
     align_epochs.make_align_list(root=root_dir, prefix = 'a', date=date,
@@ -78,7 +78,7 @@ def var_align(target, stars, epochs, refEpoch, date=date,
             makePlots=True, DoAlign=True, restrict=restrict)
 
 
-def plot_20stars(work_dir="./"):
+def plot_10stars(work_dir="./"):
     dirs = os.listdir(work_dir)
     _dirs = []
     for dd in dirs:
@@ -92,7 +92,7 @@ def plot_20stars(work_dir="./"):
         _f = Table.read(align_dir + 'align_t.name', format='ascii')
         names = _f['col1']
         names = np.array(names)
-        for s in range(20):
+        for s in range(10):
             plotStar(starName=names[s], rootDir=_dir, align='align/align_t', poly='polyfit_d/fit', points='/points_d/')
 
     plt.close('all')
@@ -349,25 +349,25 @@ def ftest_summary(target, date,root='/u/nijaid/work/', prefix='a',
         print('\n')
 
 def compare_orders(target, date, prefix='a', orders=[3,4,5], weights=[1,2,3,4],
-                    Kcut=18, only_stars_in_fit=True, plot_dir='compare_epochs/', root='/u/nijaid/work/'):
+                    Kcut=18, only_stars_in_fit=True, plot_dir='compare_epochs/', root='/g/lu/microlens/cross_epoch/'):
     from jlu.microlens import align_compare
     from nirc2.reduce import util
 
     work_dir = root + target.upper() + '/' + prefix + '_' + date + '/'
-    plot_d = work_dir + plot_dir
+    plot_d = '/u/nijaid/work/' + target.upper() + '/' + prefix + '_' + date + '/' + plot_dir
     util.mkdir(plot_d)
     
-    ana_fmt = work_dir + prefix + '_' + target + '_' + date + '_a{0}_m{1}_w{2}_MC100/'
+    al_fmt = work_dir + prefix + '_' + target + '_' + date + '_a{0}_m{1}_w{2}_MC100/'
     for ww in weights:
-        ana_dirs = []
+        al_dirs = []
         for oo in orders:
-            ana_dir = ana_fmt.format(int(oo), int(Kcut), int(ww))
-            ana_dirs.append(ana_dir)
+            al_dir = al_fmt.format(int(oo), int(Kcut), int(ww))
+            al_dirs.append(al_dir)
             
         cut_dir = 'm' + str(Kcut) + '_w' + str(ww) + '/'
         print('** Weight = ' + str(ww) + ' **') 
         util.mkdir(plot_d+cut_dir)
-        align_compare.align_residuals_vs_order(ana_dirs, firstorder=orders[0], only_stars_in_fit=only_stars_in_fit, plot_dir=plot_d+cut_dir)
+        align_compare.align_residuals_vs_order(al_dirs, firstorder=orders[0], only_stars_in_fit=only_stars_in_fit, plot_dir=plot_d+cut_dir)
         print('\n')
 
     plt.close('all')
@@ -485,3 +485,91 @@ def align_plot_fit(targets, align_dir="./"):
     plt.close()
 
     return(plot_dir + '/plots/plot_local_astrometry.png')
+
+def epoch_quiver(target, epoch, epoch_num, align='align/align_t', poly='polyfit_d/fit', points='points_d/',
+               useAccFits=False, magCut=18, root='./'):
+    from astropy.io import fits
+    from matplotlib.colors import LogNorm
+
+    os.chdir(root)
+    align_dir = os.getcwd()
+    print(align_dir)
+    print('*******************')
+
+    data_root = '/u/jlu/data/microlens/'
+    combo = data_root + epoch + '/combo/mag' + epoch + '_' + target + '_kp'
+    img = fits.getdata(combo + '.fits')
+    
+    s = starset.StarSet(root + align)
+    s.loadStarsUsed()
+    s.loadPolyfit(root + poly, accel=0, arcsec=0)
+
+    ee = epoch_num
+    
+    try: 
+        pointsFile = root + points + target + '.points'
+        if os.path.exists(pointsFile + '.orig'):
+            pointsTab = Table.read(pointsFile + '.orig', format='ascii')
+        else:
+            pointsTab = Table.read(pointsFile, format='ascii')
+            
+        times = pointsTab[pointsTab.colnames[0]]
+    except:
+        print( 'Star ' + target + ' not in list' )
+    
+    plt.clf()
+    plt.close(1)
+    plt.figure(1, figsize=(10, 10))
+    
+    # Data
+    x = s.getArrayFromEpoch(ee, 'xpix')
+    y = s.getArrayFromEpoch(ee, 'ypix')
+    m = s.getArrayFromEpoch(ee, 'mag')
+    isUsed = s.getArrayFromEpoch(ee, 'isUsed')
+    rad = np.hypot(x - 512, y - 512)
+
+    good = np.where(isUsed == True)
+    stars = s.stars
+
+    Nstars = len(x)
+    x_fit = np.zeros(Nstars, dtype=float)
+    y_fit = np.zeros(Nstars, dtype=float)
+    residsX = np.zeros(Nstars, dtype=float)
+    residsY = np.zeros(Nstars, dtype=float)
+    idx2 = []
+    for i in range(Nstars):
+        fitx = stars[i].fitXv
+        fity = stars[i].fitYv 
+        StarName = stars[i].name
+
+        dt = times[ee] - fitx.t0
+        fitLineX = fitx.p + (fitx.v * dt)
+            
+        fitSigX = np.sqrt( fitx.perr**2 + (dt * fitx.verr)**2 )
+
+        fitLineY = fity.p + (fity.v * dt)
+        fitSigY = np.sqrt( fity.perr**2 + (dt * fity.verr)**2 )
+
+        x_fit[i] = fitLineX
+        y_fit[i] = fitLineY
+        residsX[i] = x[i] - fitLineX
+        residsY[i] = y[i] - fitLineY
+        
+    idx = np.where((np.abs(residsX) < 10.0) & (np.abs(residsY) < 10.0))[0]
+    print ("Trimmed {0:d} stars with too-large residuals (>10 pix)".format(len(idx)))
+    plt.imshow(img, cmap='afmhot', norm=LogNorm(vmin=0.01,vmax=100000))
+    plt.ylim(0, 1100)
+    plt.xlim(0, 1100)
+    plt.yticks(fontsize=10)
+    plt.xticks([200,400,600,800,1000], fontsize=10)
+    q = plt.quiver(x_fit, y_fit, residsX, residsY, scale_units='width', scale=0.5, color='gray')
+    #q = plt.quiver(x_fit[idx], y_fit[idx], residsX[idx], residsY[idx], scale_units='width', scale=0.5, color='black')
+    q = plt.quiver(x_fit[good], y_fit[good], residsX[good], residsY[good], scale_units='width', scale=0.5, color='red')
+    plt.quiver([850, 0], [100, 0], [0.05, 0.05], [0, 0], color='red', scale=0.5, scale_units='width')
+    plt.text(850, 120, '0.5 mas', color='red', fontsize=10)
+
+    alignment = align_dir[-26:]
+    plt.title(alignment + '_' + epoch)
+    
+    plt.show()
+    plt.savefig(root + 'plots/' + epoch + '_quiver.png')

@@ -4,6 +4,8 @@ import pylab as py
 from astropy.table import Table
 from astropy.io import fits
 from matplotlib.colors import LogNorm
+from jlu.microlens import align_compare
+from gcwork import starset
 import os
 import pdb
 
@@ -123,15 +125,57 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     py.savefig(out + '.png', dpi=300)
     print('\nFigure saved in ' + outdir + '\n')
 
+def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=False, root='/u/nijaid/work/', main_out='/u/nijaid/microlens/paper_plots/'):
+    work_dir = root + target.upper() + '/' + prefix + '_' + date + '/'
+
+    align_dir = work_dir + prefix + '_' + target + '_' + date + '_a' + str(transform) + '_m' + str(Kcut) + '_w' + str(weight) + '_MC100/'
+    s = starset.StarSet(align_dir + 'align/align_t')
+    s.loadPolyfit(align_dir + 'polyfit_d/fit', accel=0, arcsec=0)
+
+    names = s.getArray('name')
+    i = names.index(target)
+    star = s.stars[i]
+
+    pointsTab = Table.read(align_dir + 'points_d/' + target + '.points', format='ascii')
+    time = np.array(pointsTab[pointsTab.colnames[0]])
+    x = pointsTab[pointsTab.colnames[1]]
+    y = pointsTab[pointsTab.colnames[2]]
+    xerr = pointsTab[pointsTab.colnames[3]] * 9.95
+    yerr = pointsTab[pointsTab.colnames[4]] * 9.95
+
+    fitx = star.fitXv
+    fity = star.fitYv
+    dt = time - fitx.t0
+    fitLineX = fitx.p + (fitx.v*dt)
+    fitLineY = fity.p + (fity.v*dt)
+
+    resX = (x - fitLineX) * 9.95
+    resY = (y - fitLineY) * 9.95
+
+    fmt = '{0:.3f}: dx = {1:6.3f}  dy = {2:6.3f}  xe = {3:6.3f}  ye = {3:6.3f}'
+    for yy in range(len(time)):
+        print(fmt.format(time[yy], resX[yy], resY[yy], xerr[yy], yerr[yy]))
+
+    if export:
+        out_dir = main_out + 'align_res_' + target + '_' + date + '_a' + str(transform) + '_m' + str(Kcut) + '_w' + str(weight)
+        _out = open(out_dir + '.txt', 'w')
+
+        pfmt = fmt + '\n'
+        for yy in range(len(time)):
+            _out.write(pfmt.format(time[yy], resX[yy], resY[yy], xerr[yy], yerr[yy]))
+
+        _out.close()
+        
+
 def analyzed(target):
     if target == 'ob150211':
-        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08']
+        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08', '17jul19']
         xlim = [8, 19, 1e-2, 30.0]
     if target == 'ob150029':
-        epochs = ['15jun07', '15jul23', '16may24', '16jul14', '17may21']
+        epochs = ['15jun07', '15jul23', '16may24', '16jul14', '17may21', '17jul14', '17jul19']
         xlim = [11.5, 22, 1e-2, 30.0]
     if target == 'ob140613':
-        epochs = ['15jun07', '15jun28', '16apr17', '16may24', '16aug02', '17jun05']
+        epochs = ['15jun07', '15jun28', '16apr17', '16may24', '16aug02', '17jun05', '17jul14']
         xlim = [11.75, 22.5, 1e-2, 30.0]
     return epochs, xlim
 

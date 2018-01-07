@@ -4,8 +4,7 @@ from gcwork.starTables import Labels
 import os
 import pdb
 
-def makeLabelDat(root='./', align='align/align_t', poly='polyfit_d/fit',
-                 oldLabelFile='/u/ghezgroup/data/gc/source_list/label.dat',
+def makeLabelDat(oldLabelFile, root='./', align='align/align_t', poly='polyfit_d/fit',
                  addNewStars=True, keepOldStars=True, updateStarPosVel=True,
                  newUse=0, rad_cut=None,
                  stars=None, newLabelFile='label_new.dat'):
@@ -63,25 +62,27 @@ def makeLabelDat(root='./', align='align/align_t', poly='polyfit_d/fit',
 
     if poly != None:
         t0 = s.getArray('fitXv.t0')
-        x = s.getArray('fitXv.p')# * -1.0
+        x = s.getArray('fitXv.p') * -1.0
         y = s.getArray('fitYv.p')
         xerr = s.getArray('fitXv.perr')
         yerr = s.getArray('fitYv.perr')
-        vx = s.getArray('fitXv.v') * 1000.0# * -1.0
-        vy = s.getArray('fitYv.v') * 1000.0
-        vxerr = s.getArray('fitXv.verr') * 1000.0
-        vyerr = s.getArray('fitYv.verr') * 1000.0
+        vx = s.getArray('fitXv.v') * 995.0 * -1.0
+        vy = s.getArray('fitYv.v') * 995.0
+        vxerr = s.getArray('fitXv.verr') * 995.0
+        vyerr = s.getArray('fitYv.verr') * 995.0
     else:
         t0 = s.getArray('fitXalign.t0')
-        x = s.getArray('fitXalign.p')# * -1.0
+        x = s.getArray('fitXalign.p') * -1.0
         y = s.getArray('fitYalign.p')
         xerr = s.getArray('fitXalign.perr')
         yerr = s.getArray('fitYalign.perr')
-        vx = s.getArray('fitXalign.v') * 1000.0# * -1.0
-        vy = s.getArray('fitYalign.v') * 1000.0
-        vxerr = s.getArray('fitXalign.verr') * 1000.0
-        vyerr = s.getArray('fitYalign.verr') * 1000.0
+        vx = s.getArray('fitXalign.v') * 995.0 * -1.0
+        vy = s.getArray('fitYalign.v') * 995.0
+        vxerr = s.getArray('fitXalign.verr') * 995.0
+        vyerr = s.getArray('fitYalign.verr') * 995.0
 
+    x -= x[0]
+    y -= y[0]
     r2d = np.sqrt(x**2 + y**2)
     mag = s.getArray('mag')
 
@@ -151,11 +152,63 @@ def makeLabelDat(root='./', align='align/align_t', poly='polyfit_d/fit',
     alnLabels.t0 = t0
     alnLabels.r = r2d
 
+    def addStarFromAlign(alnLabels, ii, use):
+        newLabels.ourName.append(alnLabels.ourName[ii])
+        newLabels.name.append(alnLabels.name[ii])
+        newLabels.mag.append(alnLabels.mag[ii])
+        newLabels.x.append(alnLabels.x[ii])
+        newLabels.y.append(alnLabels.y[ii])
+        newLabels.xerr.append(alnLabels.xerr[ii])
+        newLabels.yerr.append(alnLabels.yerr[ii])
+        newLabels.vx.append(alnLabels.vx[ii])
+        newLabels.vy.append(alnLabels.vy[ii])
+        newLabels.vxerr.append(alnLabels.vxerr[ii])
+        newLabels.vyerr.append(alnLabels.vyerr[ii])
+        newLabels.t0.append(alnLabels.t0[ii])
+        newLabels.useToAlign.append(use)
+        newLabels.r.append(alnLabels.r[ii])
+
+    def addStarFromOldLabels(oldLabels, ii):
+        newLabels.ourName.append(oldLabels.name[ii])
+        newLabels.ourName.append(oldLabels.ourName[ii])
+        newLabels.name.append(oldLabels.name[ii])
+        newLabels.mag.append(oldLabels.mag[ii])
+        newLabels.x.append(oldLabels.x[ii])
+        newLabels.y.append(oldLabels.y[ii])
+        newLabels.xerr.append(oldLabels.xerr[ii])
+        newLabels.yerr.append(oldLabels.yerr[ii])
+        newLabels.vx.append(oldLabels.vx[ii])
+        newLabels.vy.append(oldLabels.vy[ii])
+        newLabels.vxerr.append(oldLabels.vxerr[ii])
+        newLabels.vyerr.append(oldLabels.vyerr[ii])
+        newLabels.t0.append(oldLabels.t0[ii])
+        newLabels.useToAlign.append(oldLabels.useToAlign[ii])
+        newLabels.r.append(oldLabels.r[ii])
+
+    def deleteFromAlign(alnLabels, idx):
+        # Delete them from the align lists.
+        alnLabels.ourName = np.delete(alnLabels.ourName, idx)
+        alnLabels.name = np.delete(alnLabels.name, idx)
+        alnLabels.mag = np.delete(alnLabels.mag, idx)
+        alnLabels.x = np.delete(alnLabels.x, idx)
+        alnLabels.y = np.delete(alnLabels.y, idx)
+        alnLabels.xerr = np.delete(alnLabels.xerr, idx)
+        alnLabels.yerr = np.delete(alnLabels.yerr, idx)
+        alnLabels.vx = np.delete(alnLabels.vx, idx)
+        alnLabels.vy = np.delete(alnLabels.vy, idx)
+        alnLabels.vxerr = np.delete(alnLabels.vxerr, idx)
+        alnLabels.vyerr = np.delete(alnLabels.vyerr, idx)
+        alnLabels.t0 = np.delete(alnLabels.t0, idx)
+        alnLabels.r = np.delete(alnLabels.r, idx)
+
     # Radial cut
     if rad_cut != None:
-        for rr in len(range(alnLabels.name)):
-            if alnLabels.r[rr] < rad_cut:
-                deleteFromAlign(alnLabels, rr)
+        cut = []
+        for rr in range(len(alnLabels.name)):
+            if alnLabels.r[rr] > rad_cut:
+                cut.append(rr)
+
+        deleteFromAlign(alnLabels, cut)
     
     nn = 0
     while nn < len(oldLabels.name):
@@ -207,63 +260,13 @@ def makeLabelDat(root='./', align='align/align_t', poly='polyfit_d/fit',
     for gg in range(len(alnLabels.name)):
         addStarFromAlign(alnLabels, gg, newUse)
         
-    # Quick verification that we don't have repeat names.
+    # Quick verification that we don't have repeated names.
     uniqueNames = np.unique(newLabels.name)
     if len(uniqueNames) != len(newLabels.name):
         print( 'Problem, we have a repeat name!!')
 
     # Write to output
     newLabels.saveToFile(root + 'source_list/' + newLabelFile)
-
-def addStarFromAlign(alnLabels, ii, use):
-    newLabels.ourName.append(alnLabels.ourName[ii])
-    newLabels.name.append(alnLabels.name[ii])
-    newLabels.mag.append(alnLabels.mag[ii])
-    newLabels.x.append(alnLabels.x[ii])
-    newLabels.y.append(alnLabels.y[ii])
-    newLabels.xerr.append(alnLabels.xerr[ii])
-    newLabels.yerr.append(alnLabels.yerr[ii])
-    newLabels.vx.append(alnLabels.vx[ii])
-    newLabels.vy.append(alnLabels.vy[ii])
-    newLabels.vxerr.append(alnLabels.vxerr[ii])
-    newLabels.vyerr.append(alnLabels.vyerr[ii])
-    newLabels.t0.append(alnLabels.t0[ii])
-    newLabels.useToAlign.append(use)
-    newLabels.r.append(alnLabels.r[ii])
-
-def addStarFromOldLabels(oldLabels, ii):
-    newLabels.ourName.append(oldLabels.name[ii])
-    newLabels.ourName.append(oldLabels.ourName[ii])
-    newLabels.name.append(oldLabels.name[ii])
-    newLabels.mag.append(oldLabels.mag[ii])
-    newLabels.x.append(oldLabels.x[ii])
-    newLabels.y.append(oldLabels.y[ii])
-    newLabels.xerr.append(oldLabels.xerr[ii])
-    newLabels.yerr.append(oldLabels.yerr[ii])
-    newLabels.vx.append(oldLabels.vx[ii])
-    newLabels.vy.append(oldLabels.vy[ii])
-    newLabels.vxerr.append(oldLabels.vxerr[ii])
-    newLabels.vyerr.append(oldLabels.vyerr[ii])
-    newLabels.t0.append(oldLabels.t0[ii])
-    newLabels.useToAlign.append(oldLabels.useToAlign[ii])
-    newLabels.r.append(oldLabels.r[ii])
-
-def deleteFromAlign(alnLabels, idx):
-    # Delete them from the align lists.
-    alnLabels.ourName = np.delete(alnLabels.ourName, idx)
-    alnLabels.name = np.delete(alnLabels.name, idx)
-    alnLabels.mag = np.delete(alnLabels.mag, idx)
-    alnLabels.x = np.delete(alnLabels.x, idx)
-    alnLabels.y = np.delete(alnLabels.y, idx)
-    alnLabels.xerr = np.delete(alnLabels.xerr, idx)
-    alnLabels.yerr = np.delete(alnLabels.yerr, idx)
-    alnLabels.vx = np.delete(alnLabels.vx, idx)
-    alnLabels.vy = np.delete(alnLabels.vy, idx)
-    alnLabels.vxerr = np.delete(alnLabels.vxerr, idx)
-    alnLabels.vyerr = np.delete(alnLabels.vyerr, idx)
-    alnLabels.t0 = np.delete(alnLabels.t0, idx)
-    alnLabels.r = np.delete(alnLabels.r, idx)
-
 
 
 def calcNewNumbers(oldNames, newNames):
@@ -299,7 +302,7 @@ def calcNewNumbers(oldNames, newNames):
 
     return newNumber
 
-def align_makeLabeldat(target, work_dir='./'):
+def align_makeLabeldat(target, rad_cut=None, newUse=0, work_dir='./'):
     dirs = os.listdir(work_dir)
     _dirs = []
     for dd in dirs:
@@ -309,6 +312,6 @@ def align_makeLabeldat(target, work_dir='./'):
     for ii in _dirs:
         os.chdir(ii)
         print(ii)
-        makeLabelDat(oldLabelFile='source_list/%s_label.dat' %target)
+        makeLabelDat('source_list/%s_label.dat' %target, newUse=newUse, rad_cut=rad_cut)
         print('\n')
         os.chdir('../')

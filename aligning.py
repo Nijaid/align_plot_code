@@ -78,7 +78,7 @@ def var_align(target, stars, epochs, refEpoch, date=date, radius_cut=4000.0,
             makePlots=True, DoAlign=True, restrict=restrict)
 
 
-def plot_10stars(work_dir="./"):
+def plot_stars(stars=10, work_dir="./"):
     dirs = os.listdir(work_dir)
     _dirs = []
     for dd in dirs:
@@ -92,7 +92,7 @@ def plot_10stars(work_dir="./"):
         _f = Table.read(align_dir + 'align_t.name', format='ascii')
         names = _f['col1']
         names = np.array(names)
-        for s in range(10):
+        for s in range(stars):
             plotStar(starName=names[s], rootDir=_dir, align='align/align_t', poly='polyfit_d/fit', points='/points_d/')
 
     plt.close('all')

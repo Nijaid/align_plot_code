@@ -1,6 +1,5 @@
 import numpy as np
-from microlens.jlu import model
-from microlens.jlu.tests import test_model
+from microlens.jlu import test_model, model
 from gcwork import starset
 from astropy import units, constants, table
 import pylab as py
@@ -16,7 +15,7 @@ def assume(t0, beta, tau, imag, outdir):
     t0 - float: Time of peak photometric signal in MJD.
     beta - float: Minimum angular distance between source and lens in mas.
     tau - float: Einstein crossing time in days.
-    outdir - str: Path to directory where the plots will be saved.
+    outdir - str: Path to directory where the plots will be produced.
     """
     mL = 1.0 # solar mass
     xS0 = np.array([0.0,0.0])
@@ -37,8 +36,8 @@ def assume(t0, beta, tau, imag, outdir):
     thetaE = units.rad * np.sqrt((4.0 * G * M / 299792458.0**2) * inv_dist)
     Er = thetaE.to('mas').value
     muS[0] = Er/tau*365.25
-    print(('Estimated Einstein radius: %f [mas]' %Er))
-    print(('Estimated source proper motion: %f [mas/yr]' %muS[0]))
+    print('Estimated Einstein radius: %f [mas]' %Er)
+    print('Estimated source proper motion: %f [mas/yr]' %muS[0])
 
     if os.path.exists(outdir) == False:
         os.mkdir(outdir)
@@ -46,16 +45,16 @@ def assume(t0, beta, tau, imag, outdir):
     test_model.test_PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, imag, outdir)
     py.close('all')
 
-def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8000.0):
+def ModelAlign(t0, beta, tau, imag, target, align, mL=1.0, dL=4000.0, dS=8000.0, root = '/u/nijaid/work/'):
     '''
-    Compare a PSPL model based on input assumptions against aligned data. Only the source has proper motion.
+    Compare a model based on input assumptions against aligned data.
 
     Args:
         t0 - float: Time of peak photometric signal in days (t=0 on New Year's of year 0, UTC).
         beta - float: Minimum angular distance between source and lens in mas.
         tau - float: Einstein crossing time in days.
-        i0 - float: Base photometric magnitude.
-        target - str: Name of the target.
+        imag - float: Base photometric magnitude.
+        target - str: Lowercase name of the target.
         align_dir - str: Path to the alignment directory.
         mL - float: Mass of the lens in solar masses.
         dL - float: Distance to the lens in parsecs.
@@ -81,23 +80,25 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     print('Estimated Einstein radius: %f [mas]' %Er)
     print('Estimated source proper motion: %f [mas/yr]' %muS[0])
 
-    os.chdir(outdir)
-    test= '/mL_%.1f_dL_%.1f_dS_%.1f/' %(mL,dL,dS)
-    test_dir = (outdir + test)
-    print('Saving in ' + test_dir)
-    if os.path.exists(test_dir) == False:
-        os.mkdir(test_dir)
+    os.chdir(root + target.upper() + '/' + align)
+    os.chdir('../tests/')
+    test = ('/mL_%.1f_dL_%.1f_dS_%.1f/' %(mL,dL,dS))
+    outdir = os.getcwd() + test
+    print outdir
+    if os.path.exists(outdir) == False:
+        os.mkdir(outdir)
 
-    # get the model and aligned data
-    modeled = model.PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, i0)
-    s = starset.StarSet(align + 'align/align_t')
-    s.loadPolyfit(align + 'polyfit_d/fit', accel=0, arcsec=0)
+    # get the model and the aligned data
+    modeled = model.PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, imag)
+    align_dir = root + target.upper() + '/' + align
+    s = starset.StarSet(align_dir + 'align/align_t')
+    s.loadPolyfit(align_dir + 'polyfit_d/fit', accel=0, arcsec=0)
 
     names = s.getArray('name')
     ss = names.index(target)
     star = s.stars[ss]
 
-    pointsTab = table.Table.read(align + 'points_d/' + target + '.points', format='ascii')
+    pointsTab = table.Table.read(align_dir + 'points_d/' + target + '.points', format='ascii')
     at = pointsTab[pointsTab.colnames[0]]
     ax = pointsTab[pointsTab.colnames[1]]
     ay = pointsTab[pointsTab.colnames[2]]
@@ -109,32 +110,29 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     mt = np.arange(t0-1500, t0+1500, 1)
     mdt = mt - modeled.t0
     adt = at - (modeled.t0 / 365.25)
-    fdt = at - fitx.t0
 
     thE = modeled.thetaE_amp
     mshift = modeled.get_centroid_shift(mt)
-    fitLineX = fitx.p + (fitx.v * fdt)
-    fitSigX = np.sqrt( fitx.perr**2 + (fdt * fitx.verr)**2 )
-    fitLineY = fity.p + (fity.v * fdt)
-    fitSigY = np.sqrt( fity.perr**2 + (fdt * fity.verr)**2 )
+    fitLineX = fitx.p + (fitx.v * adt)
+    fitSigX = np.sqrt( fitx.perr**2 + (adt * fitx.verr)**2 )
+    fitLineY = fity.p + (fity.v * adt)
+    fitSigY = np.sqrt( fity.perr**2 + (adt * fity.verr)**2 )
 
     adt *= 365.25
 
-    ## plot everything scaled in Einstein units
-    # x data
-    alignment = align[-27:-1]
+    # plot everything scaled in Einstein units
+    alignment = align[35:-1]
     fig = py.figure(figsize=(20,10))
-    
-    xpl = py.subplot(211) 
+
+    xpl = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
-    py.legend(['model (tE = %.2f days)' %(modeled.tE), alignment], loc=4)
+    py.legend(['model',alignment])
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
     xpl.set_ylabel(r'dX / $\theta_E$')
     py.title(test[1:-1] + r' - $\theta_E =$ %.2f [mas]' %thE)
 
-    # y data
     ypl = py.subplot(212, sharex=xpl)
     py.subplots_adjust(hspace=0)
     py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
@@ -144,7 +142,7 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')
 
-    py.savefig(test_dir + 'shift_v_t.png')
+    py.savefig(outdir + 'shift_v_t.png')
 
     #zoomed-in plot
     fig2 = py.figure(figsize=(10,10))
@@ -152,7 +150,7 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     xplz = py.subplot(211)
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
-    py.legend(['model (tE = %.2f days)' %(modeled.tE), alignment], loc=4)
+    py.legend(['model',alignment])
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
     xplz.set_ylabel(r'dX / $\theta_E$')
@@ -164,8 +162,8 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
     py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
-    yplz.set_xlim([adt[0] / modeled.tE - 2, adt[len(adt)-1] / modeled.tE + 2])
+    yplz.set_xlim([-5, 5])
     yplz.set_ylabel(r'dY / $\theta_E$')
     yplz.set_xlabel('(t - t0) / tE')
 
-    py.savefig(test_dir + 'shift_v_t_zoom.png')
+    py.savefig(outdir + 'shift_v_t_zoom.png')

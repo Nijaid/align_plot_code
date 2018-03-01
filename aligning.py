@@ -350,7 +350,7 @@ def ftest_summary(target, date,root='/u/nijaid/work/', prefix='a',
 
 def compare_orders(target, date, prefix='a', orders=[3,4,5], weights=[1,2,3,4],
                     Kcut=18, only_stars_in_fit=True, plot_dir='compare_epochs/', root='/g/lu/microlens/cross_epoch/'):
-    from jlu.microlens import align_compare
+    from microlens.jlu import align_compare
     from nirc2.reduce import util
 
     work_dir = root + target.upper() + '/' + prefix + '_' + date + '/'

@@ -4,10 +4,45 @@ import pylab as py
 from astropy.table import Table
 from astropy.io import fits
 from matplotlib.colors import LogNorm
-from jlu.microlens import align_compare
+from microlens.jlu import align_compare
 from gcwork import starset
 import os
 import pdb
+
+def average(target):
+    '''
+    Find the averages and number of frames from the clean lists for each epoch.
+    '''
+    os.chdir('/u/jlu/data/microlens/')
+    epochs = analyzed(target)[0]
+    
+    for ep in epochs:
+        strehl = ep + '/clean/' + target + '_kp/strehl_source.txt'
+        clean =  ep + '/clean/' + target + '_kp/c.lis'
+
+        # Create list of clean frames
+        lis = open(clean, 'r')
+        clean_lis = lis.read().split()
+        frames =[]
+        for i in range(len(clean_lis)):
+            frames.append(clean_lis[i][-10:])
+
+        clean_strehl = Table.read(strehl, format='ascii')
+        strehl_name = clean_strehl['col1']
+
+        for i in range(len(clean_lis)):
+            if strehl_name[i] == frames[i]:
+                pass
+            else:
+                clean_strehl.remove_row(i)
+
+        dropped = len(strehl_name) - len(clean_lis)
+        total = len(strehl_name)
+        print('*** Epoch: ' + ep,
+                  '\nDropped/Total frames: %d/%d' %(dropped,total),
+                  '\nStrehl: ', clean_strehl['col2'].mean(), '\nRMS error (nm): ', clean_strehl['col3'].mean(),
+                  '\nFWHM:', clean_strehl['col4'].mean(), '\n')
+        
 
 def starfield(): # plot the targets in their 15jun07 image
     root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
@@ -187,5 +222,7 @@ if __name__ == '__main__':
             starfield()
         elif argv[1] == 'mag_poserror':
             mag_poserror(argv[2])
+        elif argv[1] == 'average'
+            averaged(argv[2])
         else:
             print('This is not a valid command')

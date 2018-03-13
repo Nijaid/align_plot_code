@@ -46,9 +46,9 @@ def assume(t0, beta, tau, imag, outdir):
     test_model.test_PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, imag, outdir)
     py.close('all')
 
-def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8000.0):
+def AlignModel(t0, beta, tau, i0, target, align, source_m=True, ang=0.0, mL=1.0, dL=4000.0, dS=8000.0, save_fig=False, outdir='./'):
     '''
-    Compare a PSPL model based on input assumptions against aligned data. Only the source has proper motion.
+    Creates a PSPL model based on input assumptions against aligned data.
 
     Args:
         t0 - float: Time of peak photometric signal in days (t=0 on New Year's of year 0, UTC).
@@ -56,15 +56,19 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
         tau - float: Einstein crossing time in days.
         i0 - float: Base photometric magnitude.
         target - str: Name of the target.
-        align_dir - str: Path to the alignment directory.
+        align - str: Path to the alignment directory.
+        source_m - bool: Determine if either the source is the moving object (True) or the lens (False).
+        ang - float: Angle (degrees) at which the moving object travels w.r.t. the ecliptic.
         mL - float: Mass of the lens in solar masses.
         dL - float: Distance to the lens in parsecs.
         dS - float: Distance to the source in parsecs.
-        root - string: Path to the work directory.
+        save_fig - bool: To save or not to save the figure.
+        outdir - str: Path to save figure. Folder is created in outdir.
     '''
     xS0 = np.array([0.0, 0.0])
     muS = np.array([0.0, 0.0])
     muL = np.array([0.0, 0.0])
+    angr = np.deg2rad(ang)
 
     # estimate source proper motion from Einstein radius and crossing time
     G = 6.67408e-11 # the big G [kg^-1 m^3 s^-2]
@@ -77,16 +81,27 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     inv_dist = (1.0 / L) - (1.0 / S)
     thetaE = units.rad * np.sqrt((4.0 * G * M / 299792458.0**2) * inv_dist)
     Er = thetaE.to('mas').value
-    muS[0] = Er/tau*365.25
     print('Estimated Einstein radius: %f [mas]' %Er)
-    print('Estimated source proper motion: %f [mas/yr]' %muS[0])
+    
+    mu_i = Er/tau*365.25
+    if source_m:
+        muS[0] = mu_i*np.cos(angr)
+        muS[1] = mu_i*np.sin(angr)
+        print('Estimated source proper motion: %f [mas/yr]' %np.linalg.norm(muS))
+        print('mu_S = (%f, %f)' %(muS[0], muS[1]))
+    else:
+        muL[0] = mu_i*np.cos(angr)
+        muL[1] = mu_i*np.sin(angr)
+        print('Estimated lens proper motion: %f [mas/yr]' %np.linalg.norm(muL))
+        print('mu_L = (%f, %f)' %(muL[0], muL[1]))
 
-    os.chdir(outdir)
-    test= '/mL_%.1f_dL_%.1f_dS_%.1f/' %(mL,dL,dS)
-    test_dir = (outdir + test)
-    print('Saving in ' + test_dir)
-    if os.path.exists(test_dir) == False:
-        os.mkdir(test_dir)
+    test= '/mL_%.2f_dL_%.2f_dS_%.2f_ang_%.1f/' %(mL,dL/1000,dS/1000,ang)
+    if save_fig==True:
+        os.chdir(outdir)
+        test_dir = (outdir + test)
+        print('Saving in ' + test_dir)
+        if os.path.exists(test_dir) == False:
+            os.mkdir(test_dir)
 
     # get the model and aligned data
     modeled = model.PSPL(mL, t0, xS0, beta, muL, muS, dL, dS, i0)
@@ -124,7 +139,6 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     # x data
     alignment = align[-27:-1]
     fig = py.figure(figsize=(20,10))
-    
     xpl = py.subplot(211) 
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
     py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
@@ -144,7 +158,9 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')
 
-    py.savefig(test_dir + 'shift_v_t.png')
+    if save_fig==True:
+        py.savefig(test_dir + 'shift_v_t.png')
+    #py.show()
 
     #zoomed-in plot
     fig2 = py.figure(figsize=(10,10))
@@ -168,4 +184,7 @@ def AlignModel(t0, beta, tau, i0, target, align, outdir, mL=1.0, dL=4000.0, dS=8
     yplz.set_ylabel(r'dY / $\theta_E$')
     yplz.set_xlabel('(t - t0) / tE')
 
-    py.savefig(test_dir + 'shift_v_t_zoom.png')
+    if save_fig==True:
+        py.savefig(test_dir + 'shift_v_t_zoom.png')
+    py.show()
+      

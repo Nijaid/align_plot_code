@@ -135,13 +135,16 @@ def AlignModel(t0, beta, tau, i0, target, align, source_m=True, ang=0.0, mL=1.0,
 
     adt *= 365.25
 
+    axf = (ax - fitLineX)
+    ayf = (ay - fitLineY)
+    
     ## plot everything scaled in Einstein units
     # x data
     alignment = align[-27:-1]
     fig = py.figure(figsize=(20,10))
     xpl = py.subplot(211) 
     py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
-    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
+    py.errorbar(adt / modeled.tE, axf*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
     py.legend(['model (tE = %.2f days)' %(modeled.tE), alignment], loc=4)
     py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
@@ -154,35 +157,52 @@ def AlignModel(t0, beta, tau, i0, target, align, source_m=True, ang=0.0, mL=1.0,
     py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
     py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
     py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
+    py.errorbar(adt / modeled.tE, ayf*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
     ypl.set_ylabel(r'dY / $\theta_E$')
     ypl.set_xlabel('(t - t0) / tE')
 
     if save_fig==True:
         py.savefig(test_dir + 'shift_v_t.png')
-    #py.show()
+    py.show()
 
-    #zoomed-in plot
-    fig2 = py.figure(figsize=(10,10))
+    ## zoomed-in plot with residuals
+    # approximate residual to integer model times
+    madt = np.round(adt)
+    xr = []
+    yr = []
+    for i in range(len(madt)):
+        idx = np.where(mdt == madt[i])[0]
+        xr.append(axf[i]*9.95 - mshift[idx,0])
+        yr.append(ayf[i]*9.95 - mshift[idx,1])
+    xr = np.array(xr)
+    yr = np.array(yr)
 
-    xplz = py.subplot(211)
-    py.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
-    py.errorbar(adt / modeled.tE, (ax - fitLineX)*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
-    py.legend(['model (tE = %.2f days)' %(modeled.tE), alignment], loc=4)
-    py.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
-    py.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
+    fig2, (xplz, xres, yplz, yres) = py.subplots(4,1, figsize=(15,15), gridspec_kw = {'height_ratios':[3,1,3,1]}, sharex=True)
+    fig2.subplots_adjust(hspace=0)
+    
+    xplz.plot(mdt / modeled.tE, mshift[:,0] / thE, 'k-')
+    xplz.errorbar(adt / modeled.tE, axf*9.95 / thE, yerr=axerr*9.95 / thE, fmt='ro')
+    xplz.legend(['model (tE = %.2f days)' %(modeled.tE), alignment], loc=4)
+    xplz.plot(adt / modeled.tE, fitSigX * 9.95 / thE, 'b--')
+    xplz.plot(adt / modeled.tE, -fitSigX * 9.95 / thE, 'b--')
     xplz.set_ylabel(r'dX / $\theta_E$')
-    py.title(test[1:-1] + r' - $\theta_E =$ %.2f [mas]' %thE)
+    xplz.set_title(test[1:-1] + r' - $\theta_E =$ %.2f [mas]' %thE)
+    xres.errorbar(adt / modeled.tE, xr / thE, yerr=axerr*9.95 / thE, fmt='ro')
+    xres.axhline(color='k')
+    xres.set_ylabel('dX res')
 
-    yplz = py.subplot(212, sharex=xplz)
-    py.subplots_adjust(hspace=0)
-    py.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
-    py.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
-    py.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
-    py.errorbar(adt / modeled.tE, (ay - fitLineY)*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
+    yplz.plot(mdt / modeled.tE, mshift[:,1] / thE, 'k-')
+    yplz.plot(adt / modeled.tE, fitSigY * 9.95 / thE, 'b--')
+    yplz.plot(adt / modeled.tE, -fitSigY * 9.95 / thE, 'b--')
+    yplz.errorbar(adt / modeled.tE, ayf*9.95 / thE, yerr=ayerr*9.95 / thE, fmt='ro')
     yplz.set_xlim([adt[0] / modeled.tE - 2, adt[len(adt)-1] / modeled.tE + 2])
     yplz.set_ylabel(r'dY / $\theta_E$')
-    yplz.set_xlabel('(t - t0) / tE')
+    yres.errorbar(adt / modeled.tE, yr / thE, yerr=ayerr*9.95 / thE, fmt='ro')
+    yres.axhline(color='k')
+    yres.set_ylabel('dY res')
+    yres.set_xlabel('(t - t0) / tE')
+    
+    #pdb.set_trace()
 
     if save_fig==True:
         py.savefig(test_dir + 'shift_v_t_zoom.png')

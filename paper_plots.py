@@ -222,7 +222,7 @@ if __name__ == '__main__':
             starfield()
         elif argv[1] == 'mag_poserror':
             mag_poserror(argv[2])
-        elif argv[1] == 'average'
-            averaged(argv[2])
+        elif argv[1] == 'average':
+            average(argv[2])
         else:
             print('This is not a valid command')

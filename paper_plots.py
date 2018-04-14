@@ -5,6 +5,7 @@ from astropy.table import Table
 from astropy.io import fits
 from matplotlib.colors import LogNorm
 from microlens.jlu import align_compare
+from microlens.jlu import model, model_fitter
 from gcwork import starset
 import os
 import pdb

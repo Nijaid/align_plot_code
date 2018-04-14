@@ -10,14 +10,21 @@ import pdb
 
 def assume(t0, beta, tau, i0, ang, mL, dL, dS, source_m):
     """
-    A quick model for microlensing signals based on the assumptions that the lens
-    is 3 solar masses and that the distance to the lens is half of the distance to
-    the source (2 kpc).
+    Create a basic PSPL model.
 
-    t0 - float: Time of peak photometric signal in MJD.
-    beta - float: Minimum angular distance between source and lens in mas.
-    tau - float: Einstein crossing time in days.
-    outdir - str: Path to directory where the plots will be saved.
+    Args:
+        t0 - float: Time of peak photometric signal in days (t=0 on New Year's of year 0, UTC).
+        beta - float: Minimum angular distance between source and lens in mas.
+        tau - float: Einstein crossing time in days.
+        i0 - float: Base photometric magnitude.
+        ang - float: Angle (degrees) at which the moving object travels w.r.t. the ecliptic.
+        mL - float: Mass of the lens in solar masses.
+        dL - float: Distance to the lens in parsecs.
+        dS - float: Distance to the source in parsecs.
+        source_m - bool: Determine if either the source is the moving object (True) or the lens (False).
+    Return:
+        test - string: Identifies the assumptions of the model.
+        modeled - object: The model.PSPL object.
     """
     xS0 = np.array([0.0, 0.0])
     muS = np.array([0.0, 0.0])
@@ -56,7 +63,7 @@ def assume(t0, beta, tau, i0, ang, mL, dL, dS, source_m):
 
 def AlignModel(t0, beta, tau, i0, target, align, source_m=True, ang=0.0, mL=1.0, dL=4000.0, dS=8000.0, save_fig=False, outdir='./'):
     '''
-    Creates a PSPL model based on input assumptions against aligned data.
+    Compares a PSPL model based on input assumptions against aligned data.
 
     Args:
         t0 - float: Time of peak photometric signal in days (t=0 on New Year's of year 0, UTC).
@@ -248,10 +255,11 @@ def PhotoModel(t0, beta, tau, i0, stars, align, source_m=True, ang=0.0, mL=1.0, 
 
     # get the modeled photometry
     photo = modeled.get_photometry(at*365.25)
-    
+    pdb.set_trace()
     fig1 = py.figure(figsize=(8,8))
     py.errorbar(ot, om, yerr=omr, fmt='o')
     py.plot(at, photo, 'ko', at, m0+7.83, 'ro')
+    py.gca().invert_yaxis()
     py.ylabel('mag')
     py.legend(['model', 'uncalibrated data + 7.83', 'OGLE O-IV optimized'])
     py.tight_layout()

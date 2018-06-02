@@ -12,7 +12,7 @@ import pdb
 
 def average(target):
     '''
-    Find the averages and number of frames from the clean lists for each epoch.
+    Find the averages and number of frames from the clean lists in each epoch.
     '''
     os.chdir('/u/jlu/data/microlens/')
     epochs = analyzed(target)[0]
@@ -205,14 +205,16 @@ def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=F
 
 def analyzed(target):
     if target == 'ob150211':
-        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08', '17jul19']
+        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08', '17jul19', '18may11']
         xlim = [8, 19, 1e-2, 30.0]
-    if target == 'ob150029':
+    elif target == 'ob150029':
         epochs = ['15jun07', '15jul23', '16may24', '16jul14', '17may21', '17jul14', '17jul19']
         xlim = [11.5, 22, 1e-2, 30.0]
-    if target == 'ob140613':
-        epochs = ['15jun07', '15jun28', '16apr17', '16may24', '16aug02', '17jun05', '17jul14']
+    elif target == 'ob140613':
+        epochs = ['15jun07', '15jun28', '16apr17', '16may24', '16aug02', '17jun05', '17jul14', '18may11']
         xlim = [11.75, 22.5, 1e-2, 30.0]
+    else:
+        raise ValueError(target + ' is not a listed target (try changing case)')
     return epochs, xlim
 
 

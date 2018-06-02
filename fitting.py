@@ -66,9 +66,6 @@ def modelfit(target, align_dir, solve = True, parallax = False, points_dir = 'po
     lnL = lnL_phot.mean() + lnL_ast.mean()
     print('lnL: ', lnL)
 
-    # data['t_phot'] /= 365.25
-    # data['t_ast'] /= 365.25
-
     util.mkdir(align_dir+mdir+'plots/')
 
     fig1, (pho, pho_res) = py.subplots(2,1, figsize=(10,10), gridspec_kw = {'height_ratios': [3,1]}, sharex=True)
@@ -117,9 +114,10 @@ def modelfit(target, align_dir, solve = True, parallax = False, points_dir = 'po
     py.title(target + ' X and Y')
     py.savefig(align_dir+mdir+'plots/pos.png')
 
-    #pdb.set_trace()
+    fit.summarize_results()
+    
     best = Table(fit.get_best_fit())
-    best.write(align_dir+'mnest_pspl/best_values.dat', format='ascii.fixed_width',
+    best.write(align_dir+mdir+'best_values.dat', format='ascii.fixed_width',
                    delimiter=' ', overwrite=True)
     
     return

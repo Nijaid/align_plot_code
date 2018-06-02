@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as py
 from astropy.table import Table
-from nirc2.reduce import util
 from microlens.jlu import model, model_fitter
+import os
 import pdb
 
 
@@ -28,45 +28,62 @@ def getdata(target, pdir):
         data['raL'] = 17.4906056
         data['decL'] = -30.9817500
     else:
-        ValueError(target+' does not have a listed RA and dec')
+        raise ValueError(target+' does not have a listed RA and dec')
 
     return data
 
-def modelfit(target, align_dir, solve = True, parallax = False, points_dir = 'points_d/', runcode = 'aa_'):
+def modelfit(target, align_dir, phot_only = False, solve = True, parallax = False, points_dir = 'points_d/', runcode = 'aa_'):
     data = getdata(target, align_dir+points_dir)
 
     if parallax == False:
-        mdir = 'mnest_pspl/'
-        fit = model_fitter.PSPL_Solver(data)
+        if phot_only:
+            mdir = 'mnest_pspl_phot/'
+            fit = model_fitter.PSPL_phot_Solver(data)
+        if not phot_only:
+            mdir = 'mnest_pspl/'
+            fit = model_fitter.PSPL_Solver(data)
     elif parallax == True:
-        mdir = 'mnest_pspl_par/'
-        fit = model_fitter.PSPL_parallax_Solver(data)
+        if phot_only:
+            mdir = 'mnest_pspl_par_phot/'
+            fit = model_fitter.PSPL_phot_parallax_Solver(data)
+        if not phot_only:
+            mdir = 'mnest_pspl_par/'
+            fit = model_fitter.PSPL_parallax_Solver(data)
 
-    fit.outputfiles_basename = align_dir+mdir+'aa_'
+    fit.outputfiles_basename = align_dir+mdir+runcode
     if solve:
         if target == 'ob150211':
             fit.mag_base_gen = model_fitter.make_gen(16.0, 18.0)
             fit.dL_gen = model_fitter.make_gen(500, 8000)
             
-        util.mkdir(align_dir+mdir)
+        if not os.path.exists(align_dir+mdir):
+            os.mkdir(align_dir+mdir)
         
         fit.solve()
         fit.plot_posteriors()
-    
+
+    if not os.path.exists(align_dir+mdir):
+        raise ValueError('This model has not been ran yet.')
+        
     modeled = fit.get_best_fit_model()
 
+    # Create t_dat vector of times covering data times + interim periods to get a smooth photometric model
     t_dat = np.linspace(np.min(data['t_phot']), np.max(data['t_phot']), num=len(data['t_phot'])*2, endpoint=True)
     mag_dat = modeled.get_photometry(t_dat)
     mag = modeled.get_photometry(data['t_phot'])
-    pos = modeled.get_astrometry(data['t_ast'])
 
     lnL_phot = modeled.likely_photometry(data['t_phot'], data['mag'], data['mag_err'])
-    lnL_ast = modeled.likely_astrometry(data['t_ast'], data['xpos'], data['ypos'], data['xpos_err'], data['ypos_err'])
+    if phot_only:
+        lnL = lnL_phot.mean()
+    if not phot_only:
+        pos = modeled.get_astrometry(data['t_ast'])
+        lnL_ast = modeled.likely_astrometry(data['t_ast'], data['xpos'], data['ypos'], data['xpos_err'], data['ypos_err'])
+        lnL = lnL_phot.mean() + lnL_ast.mean()
 
-    lnL = lnL_phot.mean() + lnL_ast.mean()
     print('lnL: ', lnL)
 
-    util.mkdir(align_dir+mdir+'plots/')
+    if not os.path.exists(align_dir+mdir+'plots/'):
+        os.mkdir(align_dir+mdir+'plots/')
 
     fig1, (pho, pho_res) = py.subplots(2,1, figsize=(10,10), gridspec_kw = {'height_ratios': [3,1]}, sharex=True)
     fig1.subplots_adjust(hspace=0)
@@ -83,36 +100,37 @@ def modelfit(target, align_dir, solve = True, parallax = False, points_dir = 'po
     pho_res.set_xlabel('days (MJD)')
     py.savefig(align_dir+mdir+'plots/photo.png')
 
-    py.figure(2)
-    py.clf()
-    py.errorbar(data['t_ast'], data['xpos'], yerr=data['xpos_err'], fmt='k.')
-    py.plot(data['t_ast'], pos[:,0], 'r-')
-    py.xlabel('days (MJD)')
-    py.ylabel('X Pos (")')
-    py.legend(['model', 'aligned data'])
-    py.title('X')
-    py.savefig(align_dir+mdir+'plots/x_pos.png')
+    if not phot_only:
+        py.figure(2)
+        py.clf()
+        py.errorbar(data['t_ast'], data['xpos'], yerr=data['xpos_err'], fmt='k.')
+        py.plot(data['t_ast'], pos[:,0], 'r-')
+        py.xlabel('days (MJD)')
+        py.ylabel('X Pos (")')
+        py.legend(['model', 'aligned data'])
+        py.title('X')
+        py.savefig(align_dir+mdir+'plots/x_pos.png')
 
-    py.figure(3)
-    py.clf()
-    py.errorbar(data['t_ast'], data['ypos'], yerr=data['ypos_err'], fmt='k.')
-    py.plot(data['t_ast'], pos[:,1], 'r-')
-    py.xlabel('days (MJD)')
-    py.ylabel('Y Pos (")')
-    py.legend(['model', 'aligned data'])
-    py.title('Y')
-    py.savefig(align_dir+mdir+'plots/y_pos.png')
+        py.figure(3)
+        py.clf()
+        py.errorbar(data['t_ast'], data['ypos'], yerr=data['ypos_err'], fmt='k.')
+        py.plot(data['t_ast'], pos[:,1], 'r-')
+        py.xlabel('days (MJD)')
+        py.ylabel('Y Pos (")')
+        py.legend(['model', 'aligned data'])
+        py.title('Y')
+        py.savefig(align_dir+mdir+'plots/y_pos.png')
 
-    py.figure(4)
-    py.clf()
-    py.errorbar(data['xpos'], data['ypos'], xerr=data['xpos_err'], yerr=data['ypos_err'], fmt='k.')
-    py.plot(pos[:,0], pos[:,1], 'r-')
-    py.gca().invert_xaxis()
-    py.xlabel('X Pos (")')
-    py.ylabel('Y Pos (")')
-    py.legend(['model', 'aligned data'])
-    py.title(target + ' X and Y')
-    py.savefig(align_dir+mdir+'plots/pos.png')
+        py.figure(4)
+        py.clf()
+        py.errorbar(data['xpos'], data['ypos'], xerr=data['xpos_err'], yerr=data['ypos_err'], fmt='k.')
+        py.plot(pos[:,0], pos[:,1], 'r-')
+        py.gca().invert_xaxis()
+        py.xlabel('X Pos (")')
+        py.ylabel('Y Pos (")')
+        py.legend(['model', 'aligned data'])
+        py.title(target + ' X and Y')
+        py.savefig(align_dir+mdir+'plots/pos.png')
 
     fit.summarize_results()
     

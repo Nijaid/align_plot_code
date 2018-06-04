@@ -82,7 +82,7 @@ def plot_stars(stars=10, work_dir="./"):
     dirs = os.listdir(work_dir)
     _dirs = []
     for dd in dirs:
-        if len(dd) == 37:
+        if len(dd) == 37: #hardcoded for structure a_ob######_yyyy_mm_dd_a#_m##_w#_MC###
             _dirs.append(dd)
 
     for ii in range(len(_dirs)):
@@ -263,12 +263,13 @@ def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
     paxes = plt.subplot(Nrows, Ncols, 6)
     id = np.where(diffY < 0)[0]
     sig[id] = -1.*sig[id]
-    (n, b, p) = plt.hist(sigX, bins, histtype='stepfilled', color='b')
+    (n, b, p) = plt.hist(sigX, bins, histtype='stepfilled', color='b', label='X res')
     plt.setp(p, 'facecolor', 'b')
-    (n, b, p) = plt.hist(sigY, bins, histtype='step', color='r')
+    (n, b, p) = plt.hist(sigY, bins, histtype='step', color='r', label='Y res')
     plt.axis([-7, 7, 0, 8], fontsize=10)
-    plt.xlabel('X Residuals (sigma)', fontsize=fontsize1)
+    plt.xlabel('Residuals (sigma)', fontsize=fontsize1)
     plt.ylabel('Number of Epochs', fontsize=fontsize1)
+    plt.legend()
 
     title = rootDir.split('/')[-2]
     plt.suptitle(title, x=0.5, y=0.97)

@@ -110,6 +110,7 @@ def modelfit(target, align_dir, phot_only = False, solve = True, parallax = Fals
         x_res.errorbar(data['t_ast'], data['xpos'] - pos[:,0], yerr=data['xpos_err'], fmt='k.')
         x_res.plot(data['t_ast'], pos[:,0] - pos[:,0], 'r-')
         x_res.set_xlabel('days (MJD)')
+        x_res.set_ylabel('data - model')
         x.set_title('X')
         py.savefig(align_dir+mdir+'plots/x_pos.png', bbox_inches='tight')
 
@@ -122,6 +123,7 @@ def modelfit(target, align_dir, phot_only = False, solve = True, parallax = Fals
         y_res.errorbar(data['t_ast'], data['ypos'] - pos[:,1], yerr=data['ypos_err'], fmt='k.')
         y_res.plot(data['t_ast'], pos[:,1] - pos[:,1], 'r-')
         y_res.set_xlabel('days (MJD)')
+        y_res.set_ylabel('data - model')
         y.set_title('Y')
         py.savefig(align_dir+mdir+'plots/y_pos.png', bbox_inches='tight')
 

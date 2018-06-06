@@ -274,7 +274,7 @@ def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
     title = rootDir.split('/')[-2]
     plt.suptitle(title, x=0.5, y=0.97)
     plt.subplots_adjust(wspace=0.4, hspace=0.4, left = 0.15, bottom = 0.1, right=0.9, top=0.9) 
-    plt.savefig(rootDir+'plots/plotStar_' + starName + '.png')
+    plt.savefig(rootDir+'plots/plotStar_' + starName + '.png', bbox_inches='tight')
 
 
 def ftest_summary(target, date,root='/u/nijaid/work/', prefix='a',

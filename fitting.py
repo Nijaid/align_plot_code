@@ -27,12 +27,18 @@ def getdata(target, pdir):
     if target=='ob150211':
         data['raL'] = 17.4906056
         data['decL'] = -30.9817500
+    elif target=='ob140613':
+        data['raL'] = 17.8993556
+        data['decL'] = -28.5726667
+    elif target=='ob150029':
+        data['raL'] = 17.9962778
+        data['decL'] = -28.6449444
     else:
         raise ValueError(target+' does not have a listed RA and dec')
 
     return data
 
-def modelfit(target, align_dir, phot_only = False, solve = True, parallax = False, points_dir = 'points_d/', runcode = 'aa_'):
+def modelfit(target, align_dir, phot_only = False, parallax = False, solve = True, points_dir = 'points_d/', runcode = 'aa_'):
     data = getdata(target, align_dir+points_dir)
 
     if parallax == False:
@@ -139,9 +145,47 @@ def modelfit(target, align_dir, phot_only = False, solve = True, parallax = Fals
         py.savefig(align_dir+mdir+'plots/pos.png', bbox_inches='tight')
 
     fit.summarize_results()
+
+    best = fit.get_best_fit()
     
-    best = Table(fit.get_best_fit())
-    best.write(align_dir+mdir+'best_values.dat', format='ascii.fixed_width',
-                   delimiter=' ', overwrite=True)
+    out = open(align_dir+mdir+runcode+'final.txt', 'w')
+    pars, q = quantiles(fit)
+    out.write('                       best      median\n')
+    for n in pars:
+        out.write('%15s  %10.3f  %10.3f + %10.3f - %10.3f\n' % \
+                      (n, best[n], q[n][0], q[n][1], q[n][2]))
+    out.close()
     
     return
+
+def quantiles(fit):
+    tab = fit.load_mnest_results()
+
+    pars = tab.colnames
+        
+    weights = tab['weights']
+    sumweights = np.sum(weights)
+    weights = weights / sumweights
+
+    sig1 = 0.682689
+    sig2 = 0.9545
+    sig3 = 0.9973
+    sig1_lo = (1.-sig1)/2.
+    sig2_lo = (1.-sig2)/2.
+    sig3_lo = (1.-sig3)/2.
+    sig1_hi = 1.-sig1_lo
+    sig2_hi = 1.-sig2_lo
+    sig3_hi = 1.-sig3_lo
+
+    # Calculate the median and quantiles.
+    med_vals = {}
+    for n in pars:
+        # Calculate median, 1 sigma lo, and 1 sigma hi credible interval.
+        med_vals[n] = model_fitter.weighted_quantile(tab[n], [0.5, sig1_lo, sig1_hi],
+                                                         sample_weight=weights)
+        # Switch from values to errors.
+        med_vals[n][1] = med_vals[n][0] - med_vals[n][1]
+        med_vals[n][2] = med_vals[n][2] - med_vals[n][0]
+            
+
+    return pars, med_vals

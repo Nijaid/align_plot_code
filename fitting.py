@@ -7,7 +7,21 @@ import pdb
 
 
 def getdata(target, pdir):
-    phot = Table.read('/g/lu/microlens/cross_epoch/OB150211/OGLE-2015-BLG-0211.dat', format='ascii')
+    if target=='ob150211':
+        phot = Table.read('/g/lu/microlens/cross_epoch/OB150211/OGLE-2015-BLG-0211.dat', format='ascii')
+        data = {'raL': 17.4906056,
+                'decL': -30.9817500}
+    elif target=='ob140613':
+        phot = Table.read('/g/lu/microlens/cross_epoch/OB140613/OGLE-2014-BLG-0613.dat', format='ascii')
+        data = {'raL': 17.8993556,
+                'decL': -28.5726667}
+    elif target=='ob150029':
+        phot = Table.read('/g/lu/microlens/cross_epoch/OB150029/OGLE-2015-BLG-0029.dat', format='ascii')
+        data = {'raL': 17.9962778,
+                'decL': -28.6449444}
+    else:
+        raise ValueError(target+' does not have a listed RA and dec')
+    
     points = Table.read(pdir + target + '.points', format='ascii')
 
     points['col2'] = (points['col2'] - points['col2'][0]) * 0.00995
@@ -15,26 +29,14 @@ def getdata(target, pdir):
     points['col4'] *= 0.00995
     points['col5'] *= 0.00995
 
-    data = {'mag_err': phot['col3'],
-            'mag': phot['col2'],
-            'xpos': points['col2'],
-            'ypos': points['col3'],
-            'xpos_err': points['col4'],
-            'ypos_err': points['col5'],
-            't_ast': points['col1']*365.25 - 678943.0, # convert to MJD 
-            't_phot': phot['col1'] - 2400000.5} # convert to MJD approximately (from OGLE's HJD)
-
-    if target=='ob150211':
-        data['raL'] = 17.4906056
-        data['decL'] = -30.9817500
-    elif target=='ob140613':
-        data['raL'] = 17.8993556
-        data['decL'] = -28.5726667
-    elif target=='ob150029':
-        data['raL'] = 17.9962778
-        data['decL'] = -28.6449444
-    else:
-        raise ValueError(target+' does not have a listed RA and dec')
+    data['mag_err'] = phot['col3']
+    data['mag'] = phot['col2']
+    data['xpos'] = points['col2']
+    data['ypos'] = points['col3']
+    data['xpos_err'] = points['col4']
+    data['ypos_err'] = points['col5']
+    data['t_ast'] = points['col1']*365.25 - 678943.0 # convert to MJD 
+    data['t_phot'] = phot['col1'] - 2400000.5 # convert to MJD approximately (from OGLE's HJD)
 
     return data
 

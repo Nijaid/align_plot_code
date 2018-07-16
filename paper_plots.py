@@ -16,7 +16,7 @@ def average(target):
     '''
     os.chdir('/u/jlu/data/microlens/')
     epochs = analyzed(target)[0]
-    
+
     for ep in epochs:
         strehl = ep + '/clean/' + target + '_kp/strehl_source.txt'
         clean =  ep + '/clean/' + target + '_kp/c.lis'
@@ -43,7 +43,23 @@ def average(target):
                   '\nDropped/Total frames: %d/%d' %(dropped,total),
                   '\nStrehl: ', clean_strehl['col2'].mean(), '\nRMS error (nm): ', clean_strehl['col3'].mean(),
                   '\nFWHM:', clean_strehl['col4'].mean(), '\n')
-        
+
+def field0211():
+    root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
+
+    fig = py.figure(figsize=(5,5))
+    img = fits.getdata(root + 'ob150211_kp.fits')
+    coords = Table.read(root + 'ob150211_kp.coo', format='ascii')
+
+    x = coords['col1']
+    y = coords['col2']
+
+    # Circle OB150211
+    py.imshow(img, cmap='Greys', norm=LogNorm(vmin=10.0, vmax=10000))
+    py.plot([x+100,x], [y-100,y], 'r-')
+    py.patches.Circle((x,y), radius=25)
+
+    py.text([x+100], [y-150], '2"', color='magenta', fontsize=10)
 
 def starfield(): # plot the targets in their 15jun07 image
     root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
@@ -58,12 +74,15 @@ def starfield(): # plot the targets in their 15jun07 image
 
         py.subplot(1,3,i+1)
         py.imshow(img, cmap='Greys', norm=LogNorm(vmin=10.0,vmax=10000))
+        # Draw line and label the target
         py.plot([x+100,x], [y-100,y], 'r-')
         py.text(x+100, y-150, targets[i], fontsize=12, color='red')
 
-        py.plot([150,351.1], [100,100], color='magenta', linewidth=2) # plot a scale
+        # Plot scale
+        py.plot([150,351.1], [100,100], color='magenta', linewidth=2)
         py.text(238.5, 125, '2"', color='magenta', fontsize=10)
 
+        # Plot compass
         ax = py.gca().axes
         py.text(1006, 1010, 'N', color='green', fontsize=11)
         ax.arrow(1022,917, 0,75, head_width=10, head_length=10, fc='green', ec='green')
@@ -126,7 +145,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
 
         tar = np.where(name == target)[0]
         idx = (np.where((mag < magCutOff) & (r < radius)))[0]
-        
+
         py.subplot(Nrows, 3, n)
         idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
@@ -201,7 +220,7 @@ def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=F
             _out.write(pfmt.format(time[yy], resX[yy], resY[yy], xerr[yy], yerr[yy]))
 
         _out.close()
-        
+
 
 def analyzed(target):
     if target == 'ob150211':

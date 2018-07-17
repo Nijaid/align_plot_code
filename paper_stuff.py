@@ -1,6 +1,6 @@
 import numpy as np
 from math import ceil
-import pylab as py
+import matplotlib.pyplot as py
 from astropy.table import Table
 from astropy.io import fits
 from matplotlib.colors import LogNorm
@@ -44,8 +44,8 @@ def average(target):
                   '\nStrehl: ', clean_strehl['col2'].mean(), '\nRMS error (nm): ', clean_strehl['col3'].mean(),
                   '\nFWHM:', clean_strehl['col4'].mean(), '\n')
 
-def field0211():
-    root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
+def field0211():    
+    root = '/u/jlu/data/microlens/15jun07/combo/mag15jun07_'
 
     fig = py.figure(figsize=(5,5))
     img = fits.getdata(root + 'ob150211_kp.fits')
@@ -55,14 +55,28 @@ def field0211():
     y = coords['col2']
 
     # Circle OB150211
+    ax = py.gca().axes
     py.imshow(img, cmap='Greys', norm=LogNorm(vmin=10.0, vmax=10000))
-    py.plot([x+100,x], [y-100,y], 'r-')
-    py.patches.Circle((x,y), radius=25)
+    ax.add_artist(py.Circle((x,y), 70, color='#000080', fill=False))
 
-    py.text([x+100], [y-150], '2"', color='magenta', fontsize=10)
+    # Plot scale
+    py.plot([150,351.1], [100,100], color='magenta', linewidth=2)
+    py.text(238.5, 125, '2"', color='magenta', fontsize=10)
+
+    # Plot compass
+    py.text(1006, 1010, 'N', color='green', fontsize=11)
+    ax.arrow(1022,917, 0,75, head_width=10, head_length=10, fc='green', ec='green')
+    py.text(900, 904, 'E', color='green', fontsize=11)
+    ax.arrow(1022,917, -75,0, head_width=10, head_length=10, fc='green', ec='green')
+
+    py.xlim(30,1100)
+    py.ylim(40,1060)
+    ax.axis('off')
+
+    py.savefig('/u/nijaid/microlens/paper_plots/0211field.png', dpi=200)
 
 def starfield(): # plot the targets in their 15jun07 image
-    root = '/Users/nijaid/microlens/data/microlens/15jun07/combo/mag15jun07_'
+    root = '/u/jlu/data/microlens/15jun07/combo/mag15jun07_'
 
     targets = ['OB140613','OB150029','OB150211']
     fig = py.figure(figsize=(15,5))
@@ -95,7 +109,7 @@ def starfield(): # plot the targets in their 15jun07 image
         py.subplots_adjust(wspace=0.025)
 
     # py.show()
-    py.savefig('/Users/nijaid/microlens/starfield.png', dpi=300)
+    py.savefig('/u/nijaid/microlens/paper_plots/starfield.png', dpi=300)
 
 def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     '''
@@ -242,9 +256,11 @@ if __name__ == '__main__':
     if len(argv) > 1:
         if argv[1] == 'starfield':
             starfield()
+        elif argv[1] == 'field0211':
+            field0211()
         elif argv[1] == 'mag_poserror':
             mag_poserror(argv[2])
         elif argv[1] == 'average':
             average(argv[2])
         else:
-            print('This is not a valid command')
+            raise Exception('{} is not a valid command'.format(argv[1]))

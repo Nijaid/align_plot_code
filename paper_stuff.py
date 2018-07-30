@@ -19,7 +19,7 @@ def average(target):
 
     for ep in epochs:
         strehl = ep + '/clean/' + target + '_kp/strehl_source.txt'
-        clean =  ep + '/clean/' + target + '_kp/c.lis'
+        clean =  ep + '/combo/mag' + ep + '_' + target + '_kp.lis'
 
         # Create list of clean frames
         lis = open(clean, 'r')
@@ -27,22 +27,22 @@ def average(target):
         frames =[]
         for i in range(len(clean_lis)):
             frames.append(clean_lis[i][-10:])
+        lis.close()
 
-        clean_strehl = Table.read(strehl, format='ascii')
-        strehl_name = clean_strehl['col1']
+        strehl_ = Table.read(strehl, format='ascii')
+        strehl_tot = len(strehl_)
 
-        for i in range(len(clean_lis)):
-            if strehl_name[i] == frames[i]:
+        for i in range(len(frames)):
+            if strehl_['col1'][i] == frames[i]:
                 pass
             else:
-                clean_strehl.remove_row(i)
+                strehl_.remove_row(i)
 
-        dropped = len(strehl_name) - len(clean_lis)
-        total = len(strehl_name)
+        dropped = strehl_tot - len(frames)
         print('*** Epoch: ' + ep,
-                  '\nDropped/Total frames: %d/%d' %(dropped,total),
-                  '\nStrehl: ', clean_strehl['col2'].mean(), '\nRMS error (nm): ', clean_strehl['col3'].mean(),
-                  '\nFWHM:', clean_strehl['col4'].mean(), '\n')
+                  '\nDropped/Total frames: %d/%d' %(dropped,strehl_tot),
+                  '\nStrehl: ', strehl_['col2'].mean(), '\nRMS error (nm): ', strehl_['col3'].mean(),
+                  '\nFWHM:', strehl_['col4'].mean(), '\n')
 
 def field0211():    
     root = '/u/jlu/data/microlens/15jun07/combo/mag15jun07_'
@@ -73,7 +73,8 @@ def field0211():
     py.ylim(40,1060)
     ax.axis('off')
 
-    py.savefig('/u/nijaid/microlens/paper_plots/0211field.png', dpi=200)
+    py.savefig('/u/nijaid/microlens/paper_plots/0211field.png', dpi=200,
+                   bbox_inches='tight')
 
 def starfield(): # plot the targets in their 15jun07 image
     root = '/u/jlu/data/microlens/15jun07/combo/mag15jun07_'
@@ -117,9 +118,16 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
 
     target - str: Lowercase name of the target.
     '''
+    from microlens.jlu import analysis
     root = '/u/jlu/data/microlens/'
     epochs, xlim = analyzed(target)
-    magCutOff = 17.0
+    if target=='ob150211':
+         an = analysis.OB150211(epochs[0], 'kp')
+    if target=='ob140613':
+        an = analysis.OB140613(epochs[0], 'kp')
+    if target=='ob150029':
+        an = analysis.OB150029(epochs[0], 'kp')
+    magCutOff = an.plotPosMagCut
     radius = 4
     scale = 0.00995
 
@@ -127,7 +135,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     n = 1
 
     py.close('all')
-    fig, axes = py.subplots(Nrows, 3, figsize=(10,7.5), sharex=True, sharey=True)
+    fig, axes = py.subplots(Nrows, 3, figsize=(10,8), sharex=True, sharey=True)
     for epoch in epochs:
         starlist = root + '%s/combo/starfinder/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
         print(starlist)
@@ -161,7 +169,6 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         idx = (np.where((mag < magCutOff) & (r < radius)))[0]
 
         py.subplot(Nrows, 3, n)
-        idx = (np.where(r<radius))[0]
         py.semilogy(mag[idx], err[idx], 'k.')
         py.semilogy(mag[tar], err[tar], 'r.') # plot the target in red
         py.axis(xlim)
@@ -176,7 +183,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
         if (n+3) <= len(epochs):
             ax.xaxis.set_ticklabels([])
         else:
-            py.xlabel('K Magnitude', fontsize=12)
+            py.xlabel('Kp Magnitude', fontsize=12)
 
         n += 1
 
@@ -191,7 +198,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     py.ylabel('Positional Uncertainty (mas)', fontsize=12)
 
     out = outdir + target + '_magPosEpochs'
-    py.savefig(out + '.png', dpi=300)
+    py.savefig(out + '.eps', dpi=300, bbox_inches='tight')
     print('\nFigure saved in ' + outdir + '\n')
 
 def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=False, root='/u/nijaid/work/', main_out='/u/nijaid/microlens/paper_plots/'):
@@ -239,7 +246,7 @@ def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=F
 def analyzed(target):
     if target == 'ob150211':
         epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08', '17jul19', '18may11']
-        xlim = [8, 19, 1e-2, 30.0]
+        xlim = [8, 17.5, 1e-2, 30.0]
     elif target == 'ob150029':
         epochs = ['15jun07', '15jul23', '16may24', '16jul14', '17may21', '17jul14', '17jul19']
         xlim = [11.5, 22, 1e-2, 30.0]

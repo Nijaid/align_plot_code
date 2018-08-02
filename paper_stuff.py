@@ -201,6 +201,60 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     py.savefig(out + '.eps', dpi=300, bbox_inches='tight')
     print('\nFigure saved in ' + outdir + '\n')
 
+def fittable(align, parallax = False):
+    from microlens.jlu.targets import ob150211_model as ob_mod
+    data = ob_mod.getdata(align+'points_d/')
+    if parallax:
+        par = '_par'
+        fit_ast = model_fitter.PSPL_parallax_Solver(data)
+        fit_phot = model_fitter.PSPL_phot_parallax_Solver(data)
+    else:
+        par = ''
+        fit_ast = model_fitter.PSPL_Solver(data)
+        fit_phot = model_fitter.PSPL_phot_Solver(data)
+    mod_ast = align + 'mnest_pspl' + par + '/'
+    mod_phot = align + 'mnest_pspl' + par + '_phot/'
+
+    fit_ast.outputfiles_basename = mod_ast + 'aa_'
+    fit_phot.outputfiles_basename = mod_phot + 'aa_'
+
+    # Setup
+    pars_list = ['mL', 't0', 'tE', 'beta', 'dL', 'dS', 'muRel_E', 'muRel_N', 'thetaE',
+                 'piE_E', 'piE_N']
+    pars = {'mL': ['$M$ (M$_{odot}$)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            't0': ['$t_0$ (MJD)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'tE': ['$t_E$ (days)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'beta': ['$u_0$','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'dL': ['$d_L$ (kpc)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'dS': ['$d_S$ (kpc)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'muRel_E': [r'$\mu_{\text{rel}, E}$ (mas/yr)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'muRel_N': [r'$\mu_{\text{rel}, N}$ (mas/yr)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'thetaE': [r'$\theta_E$ (mas)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+            'piE_E': [r'$\pi_{E,E}$','${0:.3f}^{{+{1:.3f}}}_{{-{2:.3f}}}$'],
+            'piE_N': [r'$\pi_{E,N}$','${0:.3f}^{{+{1:.3f}}}_{{-{2:.3f}}}$']}
+
+    # Get quantiles and fits
+    fit_pars_ast, q_ast = ob_mod.quantiles(fit_ast)
+    best_ast = fit_ast.get_best_fit()
+    fit_pars_phot, q_phot = ob_mod.quantiles(fit_phot)
+    best_phot = fit_phot.get_best_fit()
+
+    out = open(mod_ast + 'table.txt', 'w')
+    for pp in pars_list:
+        p = pars[pp]
+        if pp in fit_pars_ast:
+            w_ast = p[1].format(best_ast[pp], q_ast[pp][1], q_ast[pp][2])
+        else:
+            w_ast = '--'
+        if pp in fit_pars_phot:
+            w_phot = p[1].format(best_phot[pp], q_phot[pp][1], q_phot[pp][2])
+        else:
+            w_phot = '--'
+
+        out.write(p[0] + ' & ' + w_phot + ' & ' + w_ast + ' \\\\\n')
+    out.close()
+    print('Output: ' + mod_ast + 'table.txt')
+
 def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=False, root='/u/nijaid/work/', main_out='/u/nijaid/microlens/paper_plots/'):
     work_dir = root + target.upper() + '/' + prefix + '_' + date + '/'
 

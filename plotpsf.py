@@ -4,6 +4,7 @@ import numpy as np
 import pylab as plt
 from matplotlib.colors import LogNorm
 from matplotlib.pyplot import savefig, close
+import pdb
 
 def plotpsf(epoch, target, user_root, coo_star='psf_000', scale=0.00995, save=True):
     '''
@@ -27,19 +28,19 @@ def plotpsf(epoch, target, user_root, coo_star='psf_000', scale=0.00995, save=Tr
 
     root = user_root
 
-    label_file = root + 'source_list/' + target +'_psf.list'
-    t = Table.read(label_file, format='ascii')
+    label_file = root + 'source_list/' + target +'_label.dat'
+    t = Table.read(label_file, format='ascii')#[:30]
     fits_root = root + epoch + '/combo/mag' + epoch + '_' + target + '_kp'
     img = fits.getdata(fits_root + '.fits')
 
     coo_coords = Table.read(fits_root + '.coo', format='ascii')
 
-    idx0 = np.where(t['Name'] == coo_star)[0]
-    xarc0 = t['Xarc'][idx0]
-    yarc0 = t['Yarc'][idx0]
+    idx0 = np.where(t['name'] == coo_star)[0]
+    xarc0 = t['xarc'][idx0]
+    yarc0 = t['yarc'][idx0]
 
-    t['xpix'] = (t['Xarc'] - xarc0) / scale * -1.0
-    t['ypix'] = (t['Yarc'] - yarc0) / scale
+    t['xpix'] = (t['xarc'] - xarc0) / scale * -1.0
+    t['ypix'] = (t['yarc'] - yarc0) / scale
     t['xpix'] += coo_coords['col1'][0]
     t['ypix'] += coo_coords['col2'][0]
 
@@ -49,7 +50,7 @@ def plotpsf(epoch, target, user_root, coo_star='psf_000', scale=0.00995, save=Tr
     plt.plot(t['xpix'], t['ypix'], 'ko', mfc='none', mec='black', ms=10)
 
     for ii in range(len(t)):
-        plt.text(t['xpix'][ii], t['ypix'][ii], t['Name'][ii])
+        plt.text(t['xpix'][ii], t['ypix'][ii], t['name'][ii])
 
     plt.xlim(0, 1150)
     plt.ylim(0, 1150)

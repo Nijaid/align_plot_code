@@ -47,12 +47,11 @@ def get_align(align_dir="./", align_root='/align'):
             'N_epochs': N_epochs, 'N_stars': N_stars, 'years': time}
     return data
 
+date_today = strftime('%Y_%m_%d', localtime())
 
-date = strftime('%Y_%m_%d', localtime())
-
-def var_align(target, stars, epochs, refEpoch, date=date, radius_cut=4000.0,
+def var_align(target, stars, epochs, refEpoch, date=date_today, radius_cut=4000.0,
             transforms=[3,4,5], magCuts=[18], weights=[1,2,3,4],
-            trimStars=True, restrict=False):
+            trimStars=True, restrict=False, nMC=100):
     """
     Creates the lists necessary for the alignment loop, and runs the loop itself.
     """
@@ -74,8 +73,8 @@ def var_align(target, stars, epochs, refEpoch, date=date, radius_cut=4000.0,
     # run the alignment loop and plot
     align_epochs.align_loop(root=root_dir, prefix='a', target=target, stars=stars, date=date,
             transforms=transforms, magCuts=magCuts, weightings=weights,
-            Nepochs=str(len(epochs)), overwrite=True, nMC=100,
-            makePlots=True, DoAlign=True, restrict=restrict)
+            Nepochs=str(len(epochs)), overwrite=True, nMC=nMC,
+            makePlots=True, DoAlign=True, restrict=restrict, jackknife=False)
 
 
 def plot_stars(stars=10, work_dir="./"):
@@ -98,7 +97,8 @@ def plot_stars(stars=10, work_dir="./"):
     plt.close('all')
 
 def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit', points='/points_d/'):
-    print('Plotting residuals for ' + starName + ' in ' + rootDir)
+    title = os.path.basename(os.path.abspath(rootDir))
+    print('Plotting residuals for ' + starName + ' in ' + title)
 
     s = starset.StarSet(rootDir + align)
     s.loadPolyfit(rootDir + poly, accel=0, arcsec=0)
@@ -153,9 +153,11 @@ def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
           (fity.chi2red, fity.chi2, fity.dof))
 
     dateTicLoc = plt.MultipleLocator(3)
+    t0 = int(np.floor(np.min(time)))
+    tO = int(np.ceil(np.max(time)))
     dateTicRng = [2012, 2019]
     # dateTics = np.array([2011, 2012, 2013, 2014, 2015, 2016, 2017])
-    dateTics = np.array([2015, 2016, 2017, 2018])
+    dateTics = np.arange(t0, tO+1)
     DateTicsLabel = dateTics-2000
 
     # See if we are using MJD instead.
@@ -271,7 +273,6 @@ def plotStar(starName,rootDir='./', align='align/align_t', poly='polyfit_d/fit',
     plt.ylabel('Number of Epochs', fontsize=fontsize1)
     plt.legend()
 
-    title = rootDir.split('/')[-2]
     plt.suptitle(title, x=0.5, y=0.97)
     plt.subplots_adjust(wspace=0.4, hspace=0.4, left = 0.15, bottom = 0.1, right=0.9, top=0.9) 
     plt.savefig(rootDir+'plots/plotStar_' + starName + '.png', bbox_inches='tight')

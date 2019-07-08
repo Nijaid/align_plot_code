@@ -10,12 +10,14 @@ from gcwork import starset
 import os
 import pdb
 
-def average(target):
+def average(target, plot_fwhm=False):
     '''
     Find the averages and number of frames from the clean lists in each epoch.
     '''
     os.chdir('/u/jlu/data/microlens/')
     epochs = analyzed(target)[0]
+
+    fwhm = []
 
     for ep in epochs:
         strehl = ep + '/clean/' + target + '_kp/strehl_source.txt'
@@ -27,22 +29,29 @@ def average(target):
         frames =[]
         for i in range(len(clean_lis)):
             frames.append(clean_lis[i][-10:])
+        frames = np.array(frames)
         lis.close()
 
         strehl_ = Table.read(strehl, format='ascii')
         strehl_tot = len(strehl_)
+        names = strehl_['col1']
 
-        for i in range(len(frames)):
-            if strehl_['col1'][i] == frames[i]:
-                pass
-            else:
-                strehl_.remove_row(i)
+        for nn in names:
+            if nn not in frames:
+                cc = np.where(nn == strehl_['col1'])[0][0]
+                strehl_.remove_row(cc)
 
-        dropped = strehl_tot - len(frames)
+        dropped = len(strehl_)
         print('*** Epoch: ' + ep,
-                  '\nDropped/Total frames: %d/%d' %(dropped,strehl_tot),
+                  '\nUsed/Total frames: %d/%d' %(dropped,strehl_tot),
                   '\nStrehl: ', strehl_['col2'].mean(), '\nRMS error (nm): ', strehl_['col3'].mean(),
                   '\nFWHM:', strehl_['col4'].mean(), '\n')
+
+        if plot_fwhm:
+            fwhm.append(strehl_['col4'].mean())
+
+    if plot_fwhm:
+        return fwhm
 
 def field0211():    
     root = '/u/jlu/data/microlens/15jun07/combo/mag15jun07_'
@@ -58,6 +67,7 @@ def field0211():
     ax = py.gca().axes
     py.imshow(img, cmap='Greys', norm=LogNorm(vmin=10.0, vmax=10000))
     ax.add_artist(py.Circle((x,y), 70, color='#000080', fill=False))
+    ax.text(x+77,y+10,'OB150211', fontsize=14)
 
     # Plot scale
     py.plot([150,351.1], [100,100], color='magenta', linewidth=2)
@@ -135,7 +145,7 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     n = 1
 
     py.close('all')
-    fig, axes = py.subplots(Nrows, 3, figsize=(10,8), sharex=True, sharey=True)
+    fig, axes = py.subplots(Nrows, 3, figsize=(10,10), sharex=True, sharey=True)
     for epoch in epochs:
         starlist = root + '%s/combo/starfinder/mag%s_%s_kp_rms.lis' %(epoch,epoch,target)
         print(starlist)
@@ -202,6 +212,10 @@ def mag_poserror(target, outdir='/u/nijaid/microlens/paper_plots/'):
     print('\nFigure saved in ' + outdir + '\n')
 
 def fittable(align, parallax = False):
+    '''
+    Create a LaTeX table comparing photometric and astrometric models
+    for an alignment, with or without parallax.
+    '''
     from microlens.jlu.targets import ob150211_model as ob_mod
     data = ob_mod.getdata(align+'points_d/')
     if parallax:
@@ -220,8 +234,8 @@ def fittable(align, parallax = False):
 
     # Setup
     pars_list = ['mL', 't0', 'tE', 'beta', 'dL', 'dS', 'muRel_E', 'muRel_N', 'thetaE',
-                 'piE_E', 'piE_N']
-    pars = {'mL': ['$M$ (M$_{odot}$)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
+                 'piE_E', 'piE_N', 'mag_base', 'blen_frac']
+    pars = {'mL': [r'$M$ (M$_{\odot}$)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
             't0': ['$t_0$ (MJD)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
             'tE': ['$t_E$ (days)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
             'beta': ['$u_0$','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
@@ -231,7 +245,9 @@ def fittable(align, parallax = False):
             'muRel_N': [r'$\mu_{\text{rel}, N}$ (mas/yr)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
             'thetaE': [r'$\theta_E$ (mas)','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$'],
             'piE_E': [r'$\pi_{E,E}$','${0:.3f}^{{+{1:.3f}}}_{{-{2:.3f}}}$'],
-            'piE_N': [r'$\pi_{E,N}$','${0:.3f}^{{+{1:.3f}}}_{{-{2:.3f}}}$']}
+            'piE_N': [r'$\pi_{E,N}$','${0:.3f}^{{+{1:.3f}}}_{{-{2:.3f}}}$'],
+            'mag_base': ['$I_0$','${0:.3f}^{{+{1:.3f}}}_{{-{2:.3f}}}$'],
+            'blen_frac': ['$f_b$','${0:.2f}^{{+{1:.2f}}}_{{-{2:.2f}}}$']}
 
     # Get quantiles and fits
     fit_pars_ast, q_ast = ob_mod.quantiles(fit_ast)
@@ -299,7 +315,8 @@ def align_res(target, date, prefix='a', Kcut=18, weight=4, transform=4, export=F
 
 def analyzed(target):
     if target == 'ob150211':
-        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02', '17jun05', '17jun08', '17jul19', '18may11']
+        epochs = ['15may05', '15jun07', '15jun28', '15jul23', '16may03', '16jul14', '16aug02',
+                  '17jun05', '17jun08', '17jul19', '18may11', '18aug02', '18aug16']
         xlim = [8, 17.5, 1e-2, 30.0]
     elif target == 'ob150029':
         epochs = ['15jun07', '15jul23', '16may24', '16jul14', '17may21', '17jul14', '17jul19']

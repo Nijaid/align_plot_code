@@ -2,15 +2,25 @@ import numpy as np
 from astropy.table import Table
 
 class StarTable(Table):
+    """
+    An astropy Table initialized from a file.
+    Main purpose is to fit velocities to the table's starlist.
+
+    Input:
+    table_: type str - Path to the table file.
+    """
     def __init__(self, table_):
         tab = Table.read(table_)
         Table.__init__(self, tab)
 
+        self['name'] = self['name'].astype('U20')
+
         return
-        
-    def fit_velocities(self, bootstrap=0, verbose=False):
+
+    def fit_velocities(self, bootstrap=0, time_cut=None, verbose=False):
         """
         Fit velocities for all stars in the self.
+        Inputting a time_cut will ignore the data of that year in the fit.
         """
 
         N_stars, N_epochs = self['x'].shape
@@ -68,7 +78,7 @@ class StarTable(Table):
         # STARS LOOP through the stars and work on them 1 at a time.
         # This is slow; but robust.
         for ss in range(N_stars):
-            self.fit_velocity_for_star(ss, bootstrap=bootstrap)
+            self.fit_velocity_for_star(ss, bootstrap=bootstrap, time_cut=time_cut)
 
         if verbose:
             stop_time = time.time()
@@ -76,7 +86,7 @@ class StarTable(Table):
 
         return
 
-    def fit_velocity_for_star(self, ss, bootstrap=False):
+    def fit_velocity_for_star(self, ss, bootstrap=False, time_cut=None):
         def poly_model(time, *params):
             pos = np.polynomial.polynomial.polyval(time, params)
             return pos
@@ -96,10 +106,16 @@ class StarTable(Table):
         else:
             t = self.meta['list_times']
 
-        # Figure out where we have detections (as indicated by error columns
-        good = np.where((xe != 0) & (ye != 0) &
-                        np.isfinite(xe) & np.isfinite(ye) &
-                        np.isfinite(x) & np.isfinite(y))[0]
+        # Figure out where we have detections (as indicated by error columns)
+        if time_cut is None:
+            good = np.where((xe != 0) & (ye != 0) &
+                            np.isfinite(xe) & np.isfinite(ye) &
+                            np.isfinite(x) & np.isfinite(y))[0]
+        else:
+            good = np.where((xe != 0) & (ye != 0) &
+                            np.isfinite(xe) & np.isfinite(ye) &
+                            np.isfinite(x) & np.isfinite(y) &
+                            np.floor(t) != time_cut)[0]
 
         N_good = len(good)
 

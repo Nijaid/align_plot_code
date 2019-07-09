@@ -1,5 +1,13 @@
 import numpy as np
-from astropy.table import Table
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+from astropy.table import Table, Column
+from jlu.papers import lu_2019_lens as lu
+import copy
+import time
+
+paper_dir = lu.paper_dir
+astrom_data = lu.astrom_data
 
 class StarTable(Table):
     """
@@ -7,10 +15,11 @@ class StarTable(Table):
     Main purpose is to fit velocities to the table's starlist.
 
     Input:
-    table_: type str - Path to the table file.
+    target: type str - Target name (lowercase).
     """
-    def __init__(self, table_):
-        tab = Table.read(table_)
+    def __init__(self, target):
+        self.target = target
+        tab = Table.read(astrom_data[self.target])
         Table.__init__(self, tab)
 
         self['name'] = self['name'].astype('U20')
@@ -22,6 +31,8 @@ class StarTable(Table):
         Fit velocities for all stars in the self.
         Inputting a time_cut will ignore the data of that year in the fit.
         """
+
+        self.original = copy.deepcopy(self) # Save original table
 
         N_stars, N_epochs = self['x'].shape
 
@@ -115,7 +126,7 @@ class StarTable(Table):
             good = np.where((xe != 0) & (ye != 0) &
                             np.isfinite(xe) & np.isfinite(ye) &
                             np.isfinite(x) & np.isfinite(y) &
-                            np.floor(t) != time_cut)[0]
+                            (np.floor(t) != time_cut))[0]
 
         N_good = len(good)
 
@@ -232,3 +243,112 @@ class StarTable(Table):
                 self['y0e'] = ye[0]
 
         return
+    
+    def plot_fit(self):
+        x = self['x']*-1.0
+        x0 = self['x0']*-1.0
+        vx = self['vx']*-1.0
+
+        stars = np.append([self.target], lu.comp_stars[self.target])
+
+    # Figure out the min/max of the times for these sources.
+    tdx = np.where(data['name'] == target)[0][0]
+    tmin = data['t'][tdx].min() - 0.5   # in days
+    tmax = data['t'][tdx].max() + 0.5   # in days
+
+    # Setup figure and color scales
+    fig = plt.figure(1, figsize=(13, 7.5))
+    plt.clf()
+    grid_t = plt.GridSpec(1, 3, hspace=5.0, wspace=0.5, bottom=0.60, top=0.95, left=0.12, right=0.86)
+    grid_b = plt.GridSpec(2, 3, hspace=0.1, wspace=0.5, bottom=0.10, top=0.45, left=0.12, right=0.86)
+
+    cmap = plt.cm.plasma
+    norm = plt.Normalize(vmin=tmin, vmax=tmax)
+    smap = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    smap.set_array([])
+
+    def plot_each_star(star_num, star_name):
+        # Make two boxes for each star
+        ax_sky = fig.add_subplot(grid_t[0, star_num])
+        ax_resX = fig.add_subplot(grid_b[1, star_num])
+        ax_resY = fig.add_subplot(grid_b[0, star_num])
+
+        # Fetch the data
+        tdx = np.where(data['name'] == star_name)[0][0]
+        star = data[tdx]
+
+        # Make the model curves
+        tmod = np.arange(tmin, tmax, 0.1)
+        xmod = star['x0'] + star['vx'] * (tmod - star['t0'])
+        ymod = star['y0'] + star['vy'] * (tmod - star['t0'])
+        xmode = np.hypot(star['x0e'], star['vxe'] * (tmod - star['t0']))
+        ymode = np.hypot(star['y0e'], star['vye'] * (tmod - star['t0']))
+
+        xmod_at_t = star['x0'] + star['vx'] * (star['t'] - star['t0'])
+        ymod_at_t = star['y0'] + star['vy'] * (star['t'] - star['t0'])
+
+        # Plot Positions on Sky
+        ax_sky.plot(xmod, ymod, 'k-', color='grey', zorder=1)
+        ax_sky.plot(xmod + xmode, ymod + ymode, 'k--', color='grey', zorder=1)
+        ax_sky.plot(xmod - xmode, ymod - ymode, 'k--', color='grey', zorder=1)
+        sc = ax_sky.scatter(star['x'], star['y'], c=star['t'], cmap=cmap, norm=norm, s=20, zorder=2)
+        ax_sky.errorbar(star['x'], star['y'], xerr=star['xe'], yerr=star['ye'],
+                            ecolor=smap.to_rgba(star['t']), fmt='none', elinewidth=2, zorder=2)
+        ax_sky.set_aspect('equal', adjustable='datalim')
+
+        # Figure out which axis has the bigger data range.
+        xrng = np.abs(star['x'].max() - star['x'].min())
+        yrng = np.abs(star['y'].max() - star['y'].min())
+        if xrng > yrng:
+            ax_sky.set_xlim(star['x'].min() - 0.001, star['x'].max() + 0.001)
+        else:
+            ax_sky.set_ylim(star['y'].min() - 0.001, star['y'].max() + 0.001)
+
+        # Set labels
+        ax_sky.invert_xaxis()
+        ax_sky.set_title(star_name.upper())
+        ax_sky.set_xlabel(r'$\Delta\alpha*$ (")')
+        if star_num == 0:
+            ax_sky.set_ylabel(r'$\Delta\delta$ (")')
+            
+
+        # Plot Residuals vs. Time
+        xres = (star['x'] - xmod_at_t) * 1e3
+        yres = (star['y'] - ymod_at_t) * 1e3
+        xrese = star['xe'] * 1e3
+        yrese = star['ye'] * 1e3
+        ax_resX.errorbar(star['t'], xres, yerr=xrese, fmt='r.', label=r'$\alpha*$', elinewidth=2)
+        ax_resY.errorbar(star['t'], yres, yerr=yrese, fmt='b.', label=r'$\delta$', elinewidth=2)
+        ax_resX.plot(tmod, xmod - xmod, 'r-')
+        ax_resX.plot(tmod, xmode*1e3, 'r--')
+        ax_resX.plot(tmod, -xmode*1e3, 'r--')
+        ax_resY.plot(tmod, ymod - ymod, 'b-')
+        ax_resY.plot(tmod, ymode*1e3, 'b--')
+        ax_resY.plot(tmod, -ymode*1e3, 'b--')
+        ax_resX.set_xlabel('Date (yr)')
+        ax_resX.set_ylim(-res_rng, res_rng)
+        ax_resY.set_ylim(-res_rng, res_rng)
+        ax_resY.get_xaxis().set_visible(False)
+        if star_num == 0:
+            ax_resX.set_ylabel(r'$\alpha^*$')
+            ax_resY.set_ylabel(r'$\delta$')
+            plt.gcf().text(0.015, 0.3, 'Residuals (mas)', rotation=90, fontsize=24,
+                               ha='center', va='center')
+        # if star_num == 2:
+        #     ax_res.legend(loc='right', bbox_to_anchor= (1.5, 0.5),
+        #                       borderaxespad=0, frameon=True, numpoints=1,
+        #                       handletextpad=0.1)
+            # leg_ax = fig.add_axes([0.88, 0.12, 0.1, 0.1])
+            # leg_ax.text(
+            
+
+        return sc
+
+        
+        
+    sc = plot_each_star(0, targets[0])
+    sc = plot_each_star(1, targets[1])
+    sc = plot_each_star(2, targets[2])
+    cb_ax = fig.add_axes([0.88, 0.60, 0.02, 0.35])
+    plt.colorbar(sc, cax=cb_ax, label='Year')
+

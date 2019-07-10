@@ -5,9 +5,13 @@ from astropy.table import Table, Column
 from jlu.papers import lu_2019_lens as lu
 import copy
 import time
+import pdb
 
 paper_dir = lu.paper_dir
 astrom_data = lu.astrom_data
+
+res_dict = {'ob120169': 1.1, 'ob140613': 0.4, 'ob150029': 1.1, 'ob150211': 1.3}
+time_cuts = {'ob120169': 2012, 'ob140613': 2015, 'ob150029': 2015, 'ob150211': 2015}
 
 class StarTable(Table):
     """
@@ -31,9 +35,6 @@ class StarTable(Table):
         Fit velocities for all stars in the self.
         Inputting a time_cut will ignore the data of that year in the fit.
         """
-
-        self.original = copy.deepcopy(self) # Save original table
-
         N_stars, N_epochs = self['x'].shape
 
         if verbose:
@@ -244,20 +245,22 @@ class StarTable(Table):
 
         return
 
-    def plot_fit(self):
-        x = self['x']*-1.0
-        x0 = self['x0']*-1.0
-        vx = self['vx']*-1.0
+    def plot_fit(self, fign=0, return_res=False):
+        res_rng = res_dict[self.target]
 
         stars = np.append([self.target], lu.comp_stars[self.target])
 
         # Figure out the min/max of the times for these sources.
-        tdx = np.where(self['name'] == target)[0][0]
+        tdx = np.where(self['name'] == self.target)[0][0]
         tmin = self['t'][tdx].min() - 0.5   # in days
         tmax = self['t'][tdx].max() + 0.5   # in days
 
         # Setup figure and color scales
-        fig = plt.figure(1, figsize=(13, 7.5))
+        figsize = (13, 7.5)
+        if fign != 0:
+            fig = plt.figure(fign, figsize=figsize)
+        else:
+            fig = plt.figure(figsize=figsize)
         plt.clf()
         grid_t = plt.GridSpec(1, 3, hspace=5.0, wspace=0.5, bottom=0.60, top=0.95, left=0.12, right=0.86)
         grid_b = plt.GridSpec(2, 3, hspace=0.1, wspace=0.5, bottom=0.10, top=0.45, left=0.12, right=0.86)
@@ -277,30 +280,35 @@ class StarTable(Table):
             tdx = np.where(self['name'] == star_name)[0][0]
             star = self[tdx]
 
+            # Change signs of the East
+            x = star['x']*-1.0
+            x0 = star['x0']*-1.0
+            vx = star['vx']*-1.0
+
             # Make the model curves
             tmod = np.arange(tmin, tmax, 0.1)
-            xmod = star['x0'] + star['vx'] * (tmod - star['t0'])
+            xmod = x0 + vx * (tmod - star['t0'])
             ymod = star['y0'] + star['vy'] * (tmod - star['t0'])
             xmode = np.hypot(star['x0e'], star['vxe'] * (tmod - star['t0']))
             ymode = np.hypot(star['y0e'], star['vye'] * (tmod - star['t0']))
 
-            xmod_at_t = star['x0'] + star['vx'] * (star['t'] - star['t0'])
+            xmod_at_t = x0 + vx * (star['t'] - star['t0'])
             ymod_at_t = star['y0'] + star['vy'] * (star['t'] - star['t0'])
 
             # Plot Positions on Sky
             ax_sky.plot(xmod, ymod, 'k-', color='grey', zorder=1)
             ax_sky.plot(xmod + xmode, ymod + ymode, 'k--', color='grey', zorder=1)
             ax_sky.plot(xmod - xmode, ymod - ymode, 'k--', color='grey', zorder=1)
-            sc = ax_sky.scatter(star['x'], star['y'], c=star['t'], cmap=cmap, norm=norm, s=20, zorder=2)
-            ax_sky.errorbar(star['x'], star['y'], xerr=star['xe'], yerr=star['ye'],
+            sc = ax_sky.scatter(x, star['y'], c=star['t'], cmap=cmap, norm=norm, s=20, zorder=2)
+            ax_sky.errorbar(x, star['y'], xerr=star['xe'], yerr=star['ye'],
                                 ecolor=smap.to_rgba(star['t']), fmt='none', elinewidth=2, zorder=2)
             ax_sky.set_aspect('equal', adjustable='datalim')
 
             # Figure out which axis has the bigger data range.
-            xrng = np.abs(star['x'].max() - star['x'].min())
+            xrng = np.abs(x.max() - x.min())
             yrng = np.abs(star['y'].max() - star['y'].min())
             if xrng > yrng:
-                ax_sky.set_xlim(star['x'].min() - 0.001, star['x'].max() + 0.001)
+                ax_sky.set_xlim(x.min() - 0.001, x.max() + 0.001)
             else:
                 ax_sky.set_ylim(star['y'].min() - 0.001, star['y'].max() + 0.001)
 
@@ -312,7 +320,7 @@ class StarTable(Table):
                 ax_sky.set_ylabel(r'$\Delta\delta$ (")')
 
             # Plot Residuals vs. Time
-            xres = (star['x'] - xmod_at_t) * 1e3
+            xres = (x - xmod_at_t) * 1e3
             yres = (star['y'] - ymod_at_t) * 1e3
             xrese = star['xe'] * 1e3
             yrese = star['ye'] * 1e3
@@ -334,14 +342,53 @@ class StarTable(Table):
                 plt.gcf().text(0.015, 0.3, 'Residuals (mas)', rotation=90, fontsize=24,
                                    ha='center', va='center')
 
-            return sc
+            xmode_at_t = np.hypot(star['x0e'], star['vxe'] * (star['t'] - star['t0']))*1e3
+            ymode_at_t = np.hypot(star['y0e'], star['vye'] * (star['t'] - star['t0']))*1e3
 
+            return np.vstack([[xres], [np.hypot(xrese, xmode_at_t)]]), np.vstack([[yres],\
+                             [np.hypot(yrese, ymode_at_t)]]), sc
 
-
-        sc = plot_each_star(0, targets[0])
-        sc = plot_each_star(1, targets[1])
-        sc = plot_each_star(2, targets[2])
+        xr, yr, sc = plot_each_star(0, stars[0])
+        sc = plot_each_star(1, stars[1])[-1]
+        sc = plot_each_star(2, stars[2])[-1]
         cb_ax = fig.add_axes([0.88, 0.60, 0.02, 0.35])
         plt.colorbar(sc, cax=cb_ax, label='Year')
 
         plt.show()
+
+        if return_res:
+            return xr, yr
+
+    def compare_linear_motion(self, return_results=False):
+        """
+        Compare the linear motion of the target by first fitting linear motion to all
+        the astrometry, then fitting to only non-peak astrometry.
+        Calculates the significance of the signal as
+             sigma^2_{average deviation} = 1 / (sum_i 1/sigma^2_{deviation, i}) / N_obs,
+        where
+             sigma^2_{deviation, i} = deltaX_i
+        """
+        # Plot the linear fit from the astrometry
+        self.plot_fit(fign=1)
+        # Plot the linear fit without the peak year and get the residuals
+        time_cut = time_cuts[self.target]
+        self.fit_velocities(time_cut=time_cut)
+        xr, yr = self.plot_fit(fign=2, return_res=True)
+
+        tdx = np.where(self['name'] == self.target)[0][0]
+        idx = np.where(np.floor(self[tdx]['t']) == time_cut)[0]
+
+        xres = xr[0][idx]
+        xrese = xr[1][idx]
+        yres = yr[0][idx]
+        yrese = yr[1][idx]
+
+        weights = 1/xrese
+        average = np.multiply(xres, weights).sum() / weights.sum()
+        var = 1/np.power(weights, 2).sum()/len(idx)
+
+        print("N = %d"%len(idx))
+        print("average deviation = %.2f +/- %.2f mas"%(average, np.sqrt(var)))
+
+        if return_results:
+            return average, var

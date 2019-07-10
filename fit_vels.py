@@ -7,7 +7,6 @@ import copy
 import time
 import pdb
 
-paper_dir = lu.paper_dir
 astrom_data = lu.astrom_data
 
 res_dict = {'ob120169': 1.1, 'ob140613': 0.4, 'ob150029': 1.1, 'ob150211': 1.3}
@@ -359,7 +358,7 @@ class StarTable(Table):
         if return_res:
             return xr, yr
 
-    def compare_linear_motion(self, return_results=False):
+    def compare_linear_motion(self, return_results=False, fign_start=1):
         """
         Compare the linear motion of the target by first fitting linear motion to all
         the astrometry, then fitting to only non-peak astrometry.
@@ -369,11 +368,11 @@ class StarTable(Table):
              sigma^2_{deviation, i} = deltaX_i
         """
         # Plot the linear fit from the astrometry
-        self.plot_fit(fign=1)
+        self.plot_fit(fign=fign_start)
         # Plot the linear fit without the peak year and get the residuals
         time_cut = time_cuts[self.target]
         self.fit_velocities(time_cut=time_cut)
-        xr, yr = self.plot_fit(fign=2, return_res=True)
+        xr, yr = self.plot_fit(fign=(fign_start + 1), return_res=True)
 
         tdx = np.where(self['name'] == self.target)[0][0]
         idx = np.where(np.floor(self[tdx]['t']) == time_cut)[0]
